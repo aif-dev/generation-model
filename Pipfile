@@ -12,6 +12,7 @@ music21 = "*"
 h5py = "*"
 keras = "*"
 tensorflow = "*"
+checksumdir = "*"
 
 [requires]
 python_version = "3.8"

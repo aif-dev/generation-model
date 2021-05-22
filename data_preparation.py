@@ -1,36 +1,81 @@
 import glob
+import os
 import datetime
 import pickle
+import checksumdir
 import numpy as np
 from music21 import converter, instrument, stream, note, chord
 from keras.utils import np_utils
 
+MIDI_SONGS_DIR = "midi_songs"
+DATA_DIR = "data"
+NOTES_FILENAME = "notes"
+HASH_FILENAME = "dataset_hash"
+RESULTS_DIR = "results"
+
+
+def save_data_hash(hash):
+    hash_file_path = os.path.join(DATA_DIR, HASH_FILENAME)
+    with open(hash_file_path, "wb") as hash_file:
+        pickle.dump(hash, hash_file)
+
+
+def is_data_changed():
+    current_hash = checksumdir.dirhash(MIDI_SONGS_DIR)
+
+    hash_file_path = os.path.join(DATA_DIR, HASH_FILENAME)
+    if not os.path.exists(hash_file_path):
+        save_data_hash(current_hash)
+        return True
+
+    with open(hash_file_path, "rb") as hash_file:
+        previous_hash = pickle.load(hash_file)
+
+    if previous_hash != current_hash:
+        save_data_hash(current_hash)
+        return True
+
+    return False
+
 
 def get_notes_from_dataset():
     """Get all the notes and chords from the midi files in the ./midi_songs directory"""
+
+    notes_path = os.path.join(DATA_DIR, NOTES_FILENAME)
     notes = []
-
-    for file in glob.glob("midi_songs/*.mid"):
-        midi = converter.parse(file)
-
-        print(f"Parsing {file}")
-
+    if is_data_changed():
         try:
-            # file has instrument parts
-            instrument_stream = instrument.partitionByInstrument(midi)
-            notes_to_parse = instrument_stream.parts[0].recurse()
+            for file in glob.glob(f"{MIDI_SONGS_DIR}/*.mid"):
+                midi = converter.parse(file)
+
+                print(f"Parsing {file}")
+
+                try:
+                    # file has instrument parts
+                    instrument_stream = instrument.partitionByInstrument(midi)
+                    notes_to_parse = instrument_stream.parts[0].recurse()
+                except:
+                    # file has notes in a flat structure
+                    notes_to_parse = midi.flat.notes
+
+                for element in notes_to_parse:
+                    if isinstance(element, note.Note):
+                        notes.append(str(element.pitch))
+                    elif isinstance(element, chord.Chord):
+                        notes.append(".".join(str(n) for n in element.normalOrder))
+
+            with open(notes_path, "wb") as notes_path:
+                pickle.dump(notes, notes_path)
+
         except:
-            # file has notes in a flat structure
-            notes_to_parse = midi.flat.notes
+            hash_file_path = os.path.join(DATA_DIR, HASH_FILENAME)
+            os.remove(hash_file_path)
+            print(f"Removed the hash file")
+            exit(1)
 
-        for element in notes_to_parse:
-            if isinstance(element, note.Note):
-                notes.append(str(element.pitch))
-            elif isinstance(element, chord.Chord):
-                notes.append(".".join(str(n) for n in element.normalOrder))
-
-    with open("data/notes", "wb") as filepath:
-        pickle.dump(notes, filepath)
+    else:
+        with open(notes_path, "rb") as notes_path:
+            notes = pickle.load(notes_path)
 
     return notes
 
@@ -149,4 +194,4 @@ def save_midi_file(prediction_output):
 
     midi_stream = stream.Stream(output_notes)
 
-    midi_stream.write("midi", fp=f"results/output-{datetime.datetime.now()}.mid")
+    midi_stream.write("midi", fp=f"{RESULTS_DIR}/output-{datetime.datetime.now()}.mid")
