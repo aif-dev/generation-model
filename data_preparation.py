@@ -1,5 +1,6 @@
 import glob
 import os
+import sys
 import datetime
 import pickle
 import checksumdir
@@ -14,13 +15,13 @@ HASH_FILENAME = "dataset_hash"
 RESULTS_DIR = "results"
 
 
-def save_data_hash(hash):
+def save_data_hash(hash_value):
     if not os.path.isdir(DATA_DIR):
         os.mkdir(DATA_DIR)
 
     hash_file_path = os.path.join(DATA_DIR, HASH_FILENAME)
     with open(hash_file_path, "wb") as hash_file:
-        pickle.dump(hash, hash_file)
+        pickle.dump(hash_value, hash_file)
 
 
 def is_data_changed():
@@ -73,8 +74,8 @@ def get_notes_from_dataset():
         except:
             hash_file_path = os.path.join(DATA_DIR, HASH_FILENAME)
             os.remove(hash_file_path)
-            print(f"Removed the hash file")
-            exit(1)
+            print("Removed the hash file")
+            sys.exit(1)
 
     else:
         with open(notes_path, "rb") as notes_path:

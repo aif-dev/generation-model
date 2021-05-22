@@ -1,7 +1,8 @@
-import wget
+import shutil
 import os
 from zipfile import ZipFile
-import shutil
+import wget
+
 
 DATASET_PATH = "./midi_songs"
 MAESTRO_URL = "https://storage.googleapis.com/magentadata/datasets/maestro/v3.0.0/maestro-v3.0.0-midi.zip"
@@ -17,9 +18,9 @@ def download_data():
 def move_data():
     maestro_path = "./maestro-v3.0.0"
 
-    dirs = os.listdir(maestro_path)
-    for dir in dirs:
-        path = os.path.join(maestro_path, dir)
+    directories = os.listdir(maestro_path)
+    for directory in directories:
+        path = os.path.join(maestro_path, directory)
         if os.path.isdir(path):
             print(path)
             for file in os.listdir(path):
