@@ -3,7 +3,7 @@ import os
 from zipfile import ZipFile
 import shutil
 
-ROOT_PATH = "./midi_songs"
+DATASET_PATH = "./midi_songs"
 MAESTRO_URL = "https://storage.googleapis.com/magentadata/datasets/maestro/v3.0.0/maestro-v3.0.0-midi.zip"
 
 
@@ -35,9 +35,9 @@ def cleanup():
 
 
 if __name__ == "__main__":
-    if not os.path.isdir(ROOT_PATH):
-        os.mkdir(ROOT_PATH)
+    if not os.path.isdir(DATASET_PATH):
+        os.mkdir(DATASET_PATH)
 
-    os.chdir(ROOT_PATH)
+    os.chdir(DATASET_PATH)
     download_data()
     move_data()
