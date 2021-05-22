@@ -73,13 +73,13 @@ def get_notes_from_dataset():
     notes = []
     if is_data_changed():
         try:
-            pool = Pool()
-            results = pool.map(
-                get_notes_from_file, glob.glob(f"{MIDI_SONGS_DIR}/*.mid")
-            )
+            with Pool() as pool:
+                results = pool.map(
+                    get_notes_from_file, glob.glob(f"{MIDI_SONGS_DIR}/*.mid")
+                )
 
-            for result in results:
-                notes.append(result)
+                for result in results:
+                    notes.append(result)
 
             with open(notes_path, "wb") as notes_path:
                 pickle.dump(notes, notes_path)
