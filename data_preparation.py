@@ -15,6 +15,9 @@ RESULTS_DIR = "results"
 
 
 def save_data_hash(hash):
+    if not os.path.isdir(DATA_DIR):
+        os.mkdir(DATA_DIR)
+
     hash_file_path = os.path.join(DATA_DIR, HASH_FILENAME)
     with open(hash_file_path, "wb") as hash_file:
         pickle.dump(hash, hash_file)
