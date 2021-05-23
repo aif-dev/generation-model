@@ -82,8 +82,8 @@ def get_notes_from_dataset():
                     for note in notes_from_file:
                         notes.append(note)
 
-            with open(notes_path, "wb") as notes_path:
-                pickle.dump(notes, notes_path)
+            with open(notes_path, "wb") as notes_data_file:
+                pickle.dump(notes, notes_data_file)
 
         except:
             hash_file_path = os.path.join(DATA_DIR, HASH_FILENAME)
@@ -92,8 +92,8 @@ def get_notes_from_dataset():
             sys.exit(1)
 
     else:
-        with open(notes_path, "rb") as notes_path:
-            notes = pickle.load(notes_path)
+        with open(notes_path, "rb") as notes_data_file:
+            notes = pickle.load(notes_data_file)
 
     return notes
 
