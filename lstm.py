@@ -17,6 +17,9 @@ def train_network():
 
     network_input, network_output = prepare_sequences_for_training(notes, n_vocab)
 
+    if not os.path.isdir("checkpoints"):
+        os.mkdir("checkpoints")
+
     checkpoints = ["checkpoints/" + name for name in os.listdir("checkpoints/")]
     if checkpoints:
         latest_checkpoint = max(checkpoints, key=os.path.getctime)

@@ -3,7 +3,7 @@ import os
 import sys
 import datetime
 import pickle
-from multiprocessing import Pool
+from multiprocessing import Pool, cpu_count
 import checksumdir
 import numpy as np
 from music21 import converter, instrument, stream, note, chord
@@ -73,13 +73,14 @@ def get_notes_from_dataset():
     notes = []
     if is_data_changed():
         try:
-            with Pool() as pool:
-                results = pool.map(
+            with Pool(cpu_count() - 1) as pool:
+                notes_from_files = pool.map(
                     get_notes_from_file, glob.glob(f"{MIDI_SONGS_DIR}/*.mid")
                 )
 
-                for result in results:
-                    notes.append(result)
+                for notes_from_file in notes_from_files:
+                    for note in notes_from_file:
+                        notes.append(note)
 
             with open(notes_path, "wb") as notes_path:
                 pickle.dump(notes, notes_path)
