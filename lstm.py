@@ -35,13 +35,13 @@ def train(model, network_input, network_output):
     """train the neural network"""
     filepath = "checkpoints/weights-improvement-{epoch:02d}-{loss:.4f}-bigger.hdf5"
 
-    checkpoint = ModelCheckpoint(
+    modelCheckpoint = ModelCheckpoint(
         filepath, monitor="loss", verbose=0, save_best_only=True, mode="min"
     )
 
-    earlyStopping = EarlyStopping()
+    earlyStopping = EarlyStopping(patience=3)
 
-    callbacks_list = [checkpoint, earlyStopping]
+    callbacks_list = [modelCheckpoint, earlyStopping]
 
     model.fit(
         network_input,
