@@ -3,6 +3,7 @@ import os
 import sys
 import datetime
 import pickle
+from multiprocessing import Pool, cpu_count
 import checksumdir
 import numpy as np
 from music21 import converter, instrument, stream, note, chord
@@ -42,6 +43,29 @@ def is_data_changed():
     return False
 
 
+def get_notes_from_file(file):
+    notes = []
+    midi = converter.parse(file)
+
+    print(f"Parsing {file}")
+
+    try:
+        # file has instrument parts
+        instrument_stream = instrument.partitionByInstrument(midi)
+        notes_to_parse = instrument_stream.parts[0].recurse()
+    except:
+        # file has notes in a flat structure
+        notes_to_parse = midi.flat.notes
+
+    for element in notes_to_parse:
+        if isinstance(element, note.Note):
+            notes.append(str(element.pitch))
+        elif isinstance(element, chord.Chord):
+            notes.append(".".join(str(n) for n in element.normalOrder))
+
+    return notes
+
+
 def get_notes_from_dataset():
     """Get all the notes and chords from the midi files in the ./midi_songs directory"""
 
@@ -49,27 +73,17 @@ def get_notes_from_dataset():
     notes = []
     if is_data_changed():
         try:
-            for file in glob.glob(f"{MIDI_SONGS_DIR}/*.mid"):
-                midi = converter.parse(file)
+            with Pool(cpu_count() - 1) as pool:
+                notes_from_files = pool.map(
+                    get_notes_from_file, glob.glob(f"{MIDI_SONGS_DIR}/*.mid")
+                )
 
-                print(f"Parsing {file}")
+                for notes_from_file in notes_from_files:
+                    for note in notes_from_file:
+                        notes.append(note)
 
-                try:
-                    # file has instrument parts
-                    instrument_stream = instrument.partitionByInstrument(midi)
-                    notes_to_parse = instrument_stream.parts[0].recurse()
-                except:
-                    # file has notes in a flat structure
-                    notes_to_parse = midi.flat.notes
-
-                for element in notes_to_parse:
-                    if isinstance(element, note.Note):
-                        notes.append(str(element.pitch))
-                    elif isinstance(element, chord.Chord):
-                        notes.append(".".join(str(n) for n in element.normalOrder))
-
-            with open(notes_path, "wb") as notes_path:
-                pickle.dump(notes, notes_path)
+            with open(notes_path, "wb") as notes_data_file:
+                pickle.dump(notes, notes_data_file)
 
         except:
             hash_file_path = os.path.join(DATA_DIR, HASH_FILENAME)
@@ -78,8 +92,8 @@ def get_notes_from_dataset():
             sys.exit(1)
 
     else:
-        with open(notes_path, "rb") as notes_path:
-            notes = pickle.load(notes_path)
+        with open(notes_path, "rb") as notes_data_file:
+            notes = pickle.load(notes_data_file)
 
     return notes
 
@@ -138,33 +152,6 @@ def prepare_sequences_for_prediction(notes, pitchnames, n_vocab):
     normalized_input = unnormalized_input / float(n_vocab)
 
     return (network_input, normalized_input)
-
-
-def generate_notes(model, network_input, pitchnames, n_vocab):
-    """Generate notes from the neural network based on a sequence of notes"""
-    # pick a random sequence from the input as a starting point for the prediction
-    start = np.random.randint(0, len(network_input) - 1)
-
-    int_to_note = dict((number, note) for number, note in enumerate(pitchnames))
-
-    pattern = network_input[start]
-    prediction_output = []
-
-    # generate 500 notes
-    for _ in range(500):
-        prediction_input = np.reshape(pattern, (1, len(pattern), 1))
-        prediction_input = prediction_input / float(n_vocab)
-
-        prediction = model.predict(prediction_input, verbose=0)
-
-        index = np.argmax(prediction)
-        result = int_to_note[index]
-        prediction_output.append(result)
-
-        pattern.append(index)
-        pattern = pattern[1 : len(pattern)]
-
-    return prediction_output
 
 
 def save_midi_file(prediction_output):
