@@ -1,15 +1,16 @@
-""" This module prepares midi file data and feeds it to the neural
-    network for training """
 import os
+import datetime
 import tensorflow as tf
 from keras.models import load_model
-from keras.callbacks import ModelCheckpoint, EarlyStopping
+from keras.callbacks import ModelCheckpoint, EarlyStopping, TensorBoard
 from network import create_network
 from data_preparation import get_notes_from_dataset, prepare_sequences_for_training
 
 
+LOG_DIR = "logs/"
+
+
 def train_network():
-    """Train a Neural Network to generate music"""
     notes = get_notes_from_dataset()
 
     # get amount of pitch names
@@ -32,16 +33,17 @@ def train_network():
 
 
 def train(model, network_input, network_output):
-    """train the neural network"""
     filepath = "checkpoints/weights-improvement-{epoch:02d}-{loss:.4f}-bigger.hdf5"
-
     modelCheckpoint = ModelCheckpoint(
         filepath, monitor="loss", verbose=0, save_best_only=True, mode="min"
     )
 
     earlyStopping = EarlyStopping(monitor="loss", patience=3)
 
-    callbacks_list = [modelCheckpoint, earlyStopping]
+    logdir = LOG_DIR + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    tensorBoard = TensorBoard(log_dir=logdir)
+
+    callbacks_list = [modelCheckpoint, earlyStopping, tensorBoard]
 
     model.fit(
         network_input,
