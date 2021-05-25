@@ -39,7 +39,7 @@ def train(model, network_input, network_output):
         filepath, monitor="loss", verbose=0, save_best_only=True, mode="min"
     )
 
-    earlyStopping = EarlyStopping(patience=3)
+    earlyStopping = EarlyStopping(monitor="loss", patience=3)
 
     callbacks_list = [modelCheckpoint, earlyStopping]
 
