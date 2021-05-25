@@ -43,7 +43,6 @@ if __name__ == "__main__":
 
     try:
         http_tunnel = ngrok.connect(port)
-        print("Make sure that your ngrok auth token has been set.")
     except:
         tensorboard_process.terminate()
 
