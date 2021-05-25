@@ -5,3 +5,4 @@ checkpoints/
 venv/
 data/
 midi_songs/
+logs/
