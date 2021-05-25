@@ -7,7 +7,7 @@ from lstm import LOG_DIR
 
 
 def parse_cli_args():
-    usage_str = f"Usage: {sys.argv[0]} [-h] -p <PORT>"
+    usage_str = f"Usage: {sys.argv[0]} [-h] -p <LOCAL_PORT>"
 
     try:
         opts, _ = getopt.getopt(sys.argv[1:], "hp:")
