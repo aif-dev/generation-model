@@ -38,7 +38,7 @@ def train(model, network_input, network_output):
         filepath, monitor="loss", verbose=0, save_best_only=True, mode="min"
     )
 
-    earlyStopping = EarlyStopping(monitor="loss", patience=3)
+    earlyStopping = EarlyStopping(monitor="val_loss", patience=3)
 
     logdir = LOG_DIR + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     tensorBoard = TensorBoard(log_dir=logdir)
@@ -48,6 +48,7 @@ def train(model, network_input, network_output):
     model.fit(
         network_input,
         network_output,
+        validation_split=0.2,
         epochs=200,
         batch_size=128,
         callbacks=callbacks_list,
