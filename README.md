@@ -24,6 +24,12 @@ The network will use every midi file in ./midi_songs to train the network. The m
 
 **NOTE**: You can stop the process at any point in time and the weights from the latest completed epoch will be available for text generation purposes.
 
+### To start ngrok server with Tensorboard:
+
+```
+python tensorboard.py -p <LOCAL_PORT>
+```
+
 ### To generate music run:
 
 ```
