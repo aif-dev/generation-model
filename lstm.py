@@ -3,7 +3,7 @@
 import os
 import tensorflow as tf
 from keras.models import load_model
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint, EarlyStopping
 from network import create_network
 from data_preparation import get_notes_from_dataset, prepare_sequences_for_training
 
@@ -34,10 +34,14 @@ def train_network():
 def train(model, network_input, network_output):
     """train the neural network"""
     filepath = "checkpoints/weights-improvement-{epoch:02d}-{loss:.4f}-bigger.hdf5"
-    checkpoint = ModelCheckpoint(
+
+    modelCheckpoint = ModelCheckpoint(
         filepath, monitor="loss", verbose=0, save_best_only=True, mode="min"
     )
-    callbacks_list = [checkpoint]
+
+    earlyStopping = EarlyStopping(patience=3)
+
+    callbacks_list = [modelCheckpoint, earlyStopping]
 
     model.fit(
         network_input,
