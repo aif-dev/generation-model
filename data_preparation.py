@@ -18,9 +18,15 @@ NOTES_FILENAME = "notes"
 VOCABULARY_FILENAME = "vocabulary"
 HASH_FILENAME = "dataset_hash"
 RESULTS_DIR = "results"
-
 SEQUENCE_LENGTH = 100
-NUM_NOTES_TO_PREDICT = 1  # changing this value requires refactoring
+
+"""
+changing this value requires refactoring
+
+predict.py -> loop inside generate_notes() [getting prediction]
+data_preparation.py -> loop inside prepare_sequences_for_training() [out sequences]
+"""
+NUM_NOTES_TO_PREDICT = 1
 
 
 def save_data_hash(hash_value):
