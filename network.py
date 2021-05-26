@@ -4,15 +4,15 @@ from keras.layers import Dropout
 from keras.layers import LSTM
 from keras.layers import BatchNormalization as BatchNorm
 from keras.layers import Activation
+from data_preparation import SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT
 
 
-def create_network(network_input, n_vocab, weights_filename=None):
-    """Create the structure of the neural network"""
+def create_network(vocab_size, weights_filename=None):
     model = Sequential()
     model.add(
         LSTM(
             512,
-            input_shape=(network_input.shape[1], network_input.shape[2]),
+            input_shape=(SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT),
             return_sequences=True,
         )
     )
@@ -24,7 +24,7 @@ def create_network(network_input, n_vocab, weights_filename=None):
     model.add(Activation("relu"))
     model.add(BatchNorm())
     model.add(Dropout(0.3))
-    model.add(Dense(n_vocab))
+    model.add(Dense(vocab_size))
     model.add(Activation("softmax"))
     model.compile(loss="categorical_crossentropy", optimizer="rmsprop")
 
