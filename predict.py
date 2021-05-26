@@ -11,6 +11,7 @@ from data_preparation import (
     prepare_sequences_for_prediction,
     load_vocabulary_from_training,
 )
+from data_preparation import SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT
 
 
 NUM_NOTES_TO_GENERATE = 500
@@ -41,21 +42,26 @@ def generate_notes(model, network_input, vocab, vocab_size):
     # pick a random sequence from the input as a starting point for the prediction
     start = np.random.randint(0, len(network_input) - 1)
 
-    pattern = network_input[start]
+    sequence_in = [note_idx / float(vocab_size) for note_idx in network_input[start]]
     prediction_output = []
 
     for _ in range(NUM_NOTES_TO_GENERATE):
-        prediction_input = np.reshape(pattern, (1, len(pattern), 1))
-        prediction_input = prediction_input / float(vocab_size)
+        prediction_input = np.reshape(
+            sequence_in, (1, SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT)
+        )
 
         prediction = model.predict(prediction_input, verbose=0)
+        best_note_idx = np.argmax(prediction)
+        best_note = inverted_vocab[best_note_idx]
+        prediction_output.append(best_note)
 
-        index = np.argmax(prediction)
-        result = inverted_vocab[index]
-        prediction_output.append(result)
+        normalized_best_note_idx = best_note_idx / float(vocab_size)
+        sequence_in.append(normalized_best_note_idx)
 
-        pattern.append(index)
-        pattern = pattern[1 : len(pattern)]
+        # store only last 'SEQUENCE_LENGTH' elements for next prediction
+        sequence_in = sequence_in[
+            NUM_NOTES_TO_PREDICT : SEQUENCE_LENGTH + NUM_NOTES_TO_PREDICT
+        ]
 
     return prediction_output
 
