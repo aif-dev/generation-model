@@ -40,6 +40,11 @@ class GenerateButton(Button):
         if self.x <= mouse[0] <= (self.x + self.width) and self.y <= mouse[1] <= (self.y + self.height):
             print("Generate button")
 
+class SelectButton(Button):
+    def MouseDownHandler(self, mouse):
+        if self.x <= mouse[0] <= (self.x + self.width) and self.y <= mouse[1] <= (self.y + self.height):
+            print("Select button")
+
 class LoadButton(Button):
     def MouseDownHandler(self, mouse):
         if self.x <= mouse[0] <= (self.x + self.width) and self.y <= mouse[1] <= (self.y + self.height):
@@ -50,9 +55,7 @@ class LoadButton(Button):
 class RefreshListButton(Button):
     def MouseDownHandler(self, mouse):
         if self.x <= mouse[0] <= (self.x + self.width) and self.y <= mouse[1] <= (self.y + self.height):
-            return True
-        else:
-            return False
+            print("Refresh Button")
 
 class PlayPauseButton(Button):
     def SetText(self, text, lsize=24, color=(255,255,255)):

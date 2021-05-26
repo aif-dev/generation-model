@@ -33,8 +33,11 @@ def main():
     loadButton.SetText("Load File")
     #Initialize Music player
     musicPlayer = components.MusicPlayer(0,HEIGHT-150,WIDTH,150)
+    #Initialize Select button
+    selectButton = components.SelectButton(loadButton.x + loadButton.width + 10, (WIDTH//2 + 7), 100, 30)
+    selectButton.SetText("Select File")
     #Initialize refresh list button
-    refreshButton = components.RefreshListButton((WIDTH//4)*3, (WIDTH//2 + 7), 100, 30)
+    refreshButton = components.RefreshListButton(selectButton.x + selectButton.width + 10, (WIDTH//2 + 7), 100, 30)
     refreshButton.SetText("Refresh List")
 
     running = True
@@ -47,6 +50,7 @@ def main():
         listViewer.AddToScreen(screen, mouse)
         loadButton.AddToScreen(screen, mouse)
         musicPlayer.AddToScreen(screen, mouse)
+        selectButton.AddToScreen(screen, mouse)
         refreshButton.AddToScreen(screen, mouse)
 
         for e in pygame.event.get():
@@ -59,7 +63,9 @@ def main():
                 listViewer.MouseDownHandler(mouse)
                 if loadButton.MouseDownHandler(mouse) == True:
                     LoadFileIntoMusicPlayer(listViewer, musicPlayer)
+                selectButton.MouseDownHandler(mouse)
                 musicPlayer.MouseDownHandler(mouse)
+                refreshButton.MouseDownHandler(mouse)
 
         pygame.display.flip()
 
