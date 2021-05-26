@@ -3,7 +3,7 @@ import sys
 import time
 import getopt
 from pyngrok import ngrok
-from lstm import LOG_DIR
+from train import LOG_DIR
 
 
 def parse_cli_args():
@@ -44,6 +44,7 @@ if __name__ == "__main__":
     try:
         http_tunnel = ngrok.connect(port)
     except:
+        print("Couldn't open ngrok tunnel")
         tensorboard_process.terminate()
 
     print(http_tunnel)
