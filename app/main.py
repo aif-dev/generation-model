@@ -3,12 +3,8 @@ import components
 
 def LoadFileIntoMusicPlayer(listViewer, musicPlayer):
     file = listViewer.GetSelectedFile()
-    if len(file.file) != 0:
+    if file:
         musicPlayer.LoadFile(file.file)
-
-
-
-
 
 def main():
     #Initializes Pygame Application
@@ -35,8 +31,11 @@ def main():
     #Initialize Load Button
     loadButton = components.LoadButton(WIDTH//2, (WIDTH//2 + 7), 100, 30)
     loadButton.SetText("Load File")
-    #Initialize Music Box
+    #Initialize Music player
     musicPlayer = components.MusicPlayer(0,HEIGHT-150,WIDTH,150)
+    #Initialize refresh list button
+    refreshButton = components.RefreshListButton((WIDTH//4)*3, (WIDTH//2 + 7), 100, 30)
+    refreshButton.SetText("Refresh List")
 
     running = True
     while running:
@@ -48,6 +47,7 @@ def main():
         listViewer.AddToScreen(screen, mouse)
         loadButton.AddToScreen(screen, mouse)
         musicPlayer.AddToScreen(screen, mouse)
+        refreshButton.AddToScreen(screen, mouse)
 
         for e in pygame.event.get():
             #Event for shutting own application
