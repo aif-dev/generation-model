@@ -26,7 +26,7 @@ def main():
     genButton.SetText("Generate Music")
     #Initialize ListViewer
     listViewer = components.ListViewer(WIDTH//2, 100, (WIDTH//2) - 10, HEIGHT//2)
-    mockList = ["nigga", "chigga","bro"]
+    mockList = ["Song 1", "Song 2","Song 3"]
     listViewer.StoreList(mockList)
     #Initialize Load Button
     loadButton = components.LoadButton(WIDTH//2, (WIDTH//2 + 7), 100, 30)
