@@ -3,7 +3,6 @@ import os
 import sys
 import datetime
 import pickle
-from pprint import pprint
 from multiprocessing import Pool, cpu_count
 import checksumdir
 import numpy as np
@@ -194,11 +193,15 @@ def save_midi_file(prediction_output):
         # increase offset each iteration so that notes do not stack
         offset += 0.5
 
-    random_words = RandomWords().get_random_words()
     output_name = ""
-    for i in range(2):
-        output_name += random_words[i] + "_"
-    output_name = output_name.rstrip("_").lower()
+    try:
+        random_words = RandomWords().get_random_words()
+        for i in range(2):
+            output_name += random_words[i] + "_"
+        output_name = output_name.rstrip("_").lower()
+
+    except:
+        output_name = f"output-{datetime.datetime.now()}"
 
     midi_stream = stream.Stream(output_notes)
     midi_stream.write("midi", fp=f"{RESULTS_DIR}/{output_name}.mid")
