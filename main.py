@@ -1,5 +1,6 @@
 import pygame
 import components
+from predict import generate_music_from_file
 
 
 def LoadFileIntoMusicPlayer(listViewer, musicPlayer):
@@ -9,6 +10,7 @@ def LoadFileIntoMusicPlayer(listViewer, musicPlayer):
 
 
 def main():
+    selected_file = ""
     # Initializes Pygame Application
     pygame.init()
     # Setting apps dimensions
@@ -65,14 +67,19 @@ def main():
                 pygame.quit()
 
             if e.type == pygame.MOUSEBUTTONDOWN:
-                genButton.MouseDownHandler(mouse)
+                if genButton.MouseDownHandler(mouse):
+                    if selected_file != "":
+                        print(f"Generating music from file {selected_file}")
+                        generate_music_from_file(selected_file)
                 listViewer.MouseDownHandler(mouse)
                 file = loadButton.MouseDownHandler(mouse)
                 if file is not False:
                     fileList.append(file)
                     listViewer.StoreList(fileList)
                     # LoadFileIntoMusicPlayer(listViewer, musicPlayer)
-                selectButton.MouseDownHandler(mouse)
+                if selectButton.MouseDownHandler(mouse):
+                    selected_file = listViewer.GetSelectedFile().file
+                    musicPlayer.LoadFile(selected_file)
                 musicPlayer.MouseDownHandler(mouse)
                 refreshButton.MouseDownHandler(mouse)
 

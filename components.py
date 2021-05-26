@@ -48,7 +48,9 @@ class GenerateButton(Button):
         if self.x <= mouse[0] <= (self.x + self.width) and self.y <= mouse[1] <= (
             self.y + self.height
         ):
-            print("Generate button")
+            return True
+        else:
+            return False
 
 
 class SelectButton(Button):
@@ -56,7 +58,9 @@ class SelectButton(Button):
         if self.x <= mouse[0] <= (self.x + self.width) and self.y <= mouse[1] <= (
             self.y + self.height
         ):
-            print("Select button")
+            return True
+        else:
+            return False
 
 
 class LoadButton(Button):
@@ -222,6 +226,8 @@ class MusicPlayer:
 
     def LoadFile(self, file):
         self.currentFile = file
+        print(self.currentFile)
+        self.SetText(self.currentFile)
 
     def MouseDownHandler(self, mouse):
         self.controlButton.MouseDownHandler(mouse)

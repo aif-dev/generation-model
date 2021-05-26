@@ -6,7 +6,7 @@ import pickle
 import tensorflow as tf
 import numpy as np
 from network import create_network
-from data_preparation import save_midi_file, prepare_sequences_for_prediction
+from data_preparation import save_midi_file, prepare_sequences_for_prediction, get_notes_from_file
 
 
 def get_best_weights_filename():
@@ -61,6 +61,21 @@ def generate_music():
     with open("data/notes", "rb") as filepath:
         notes = pickle.load(filepath)
 
+    # Get all pitch names
+    pitchnames = sorted(set(item for item in notes))
+    # Get all pitch names
+    n_vocab = len(set(notes))
+
+    network_input, normalized_input = prepare_sequences_for_prediction(
+        notes, pitchnames, n_vocab
+    )
+    model = create_network(normalized_input, n_vocab, get_best_weights_filename())
+    prediction_output = generate_notes(model, network_input, pitchnames, n_vocab)
+    save_midi_file(prediction_output)
+
+
+def generate_music_from_file(filename):
+    notes = get_notes_from_file(filename)
     # Get all pitch names
     pitchnames = sorted(set(item for item in notes))
     # Get all pitch names
