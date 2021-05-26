@@ -51,6 +51,14 @@ class GenerateButton(Button):
             print("Generate button")
 
 
+class SelectButton(Button):
+    def MouseDownHandler(self, mouse):
+        if self.x <= mouse[0] <= (self.x + self.width) and self.y <= mouse[1] <= (
+            self.y + self.height
+        ):
+            print("Select button")
+
+
 class LoadButton(Button):
     def MouseDownHandler(self, mouse):
         if self.x <= mouse[0] <= (self.x + self.width) and self.y <= mouse[1] <= (
@@ -124,7 +132,7 @@ class ListViewer:
         yi = self.y + 10
         for item in list:
             listItem = ListItem(self.x + 5, yi, self.width - 10, 30)
-            listItem.SetText(item.split('/')[-1])
+            listItem.SetText(item.split("/")[-1])
             listItem.file = item
             self.list.append(listItem)
             yi = yi + 30
