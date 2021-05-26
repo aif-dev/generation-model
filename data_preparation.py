@@ -201,7 +201,7 @@ def save_midi_file(prediction_output):
         output_name = output_name.rstrip("_").lower()
 
     except:
-        output_name = f"output-{datetime.datetime.now()}"
+        output_name = f"output_{datetime.datetime.now()}"
 
     midi_stream = stream.Stream(output_notes)
     midi_stream.write("midi", fp=f"{RESULTS_DIR}/{output_name}.mid")
