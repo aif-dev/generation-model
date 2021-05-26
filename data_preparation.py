@@ -79,8 +79,6 @@ def get_notes_from_file(file):
 
 
 def get_notes_from_dataset():
-    """Get all the notes and chords from the midi files in the ./midi_songs directory"""
-
     notes_path = os.path.join(DATA_DIR, NOTES_FILENAME)
     notes = []
     if is_data_changed():
@@ -166,8 +164,6 @@ def prepare_sequences_for_prediction(notes, vocab):
 
 
 def save_midi_file(prediction_output):
-    """convert the output from the prediction to notes and create a midi file
-    from the notes"""
     offset = 0
     output_notes = []
 
