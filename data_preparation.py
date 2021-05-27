@@ -56,11 +56,10 @@ def is_data_changed():
 
 
 def get_notes_from_file(file):
-    notes = []
-    midi = converter.parse(file)
-
     print(f"Parsing {file}")
 
+    midi = converter.parse(file)
+    notes = []
     try:
         # file has instrument parts
         instrument_stream = instrument.partitionByInstrument(midi)
@@ -164,6 +163,7 @@ def prepare_sequence_for_prediction(notes, vocab):
     from pprint import pprint
 
     pprint(vocab)
+    pprint(f"not present: {list(set(vocab.keys()) - set(notes))}")
     input()
 
     sequence_in = notes[:SEQUENCE_LENGTH]
@@ -173,14 +173,14 @@ def prepare_sequence_for_prediction(notes, vocab):
 
 
 def get_best_representation(vocab, sound):
+    """assumption: all 12 single notes are present in vocabulary"""
     if sound in vocab:
         return vocab[sound]
 
-    raise Exception("Not implemented")
-    if ("." in sound) or sound.isdigit():
-        chord = chord.Chord(sound)
-    else:
-        pass
+    unknown_chord = chord.Chord(sound)
+    root_note = unknown_chord.root()
+    print(f"*** Mapping {unknown_chord} to {root_note} ***")
+    return vocab[root_note]
 
 
 def save_midi_file(prediction_output):
