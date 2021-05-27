@@ -160,27 +160,22 @@ def prepare_sequence_for_prediction(notes, vocab):
         )
         sys.exit(1)
 
-    from pprint import pprint
-
-    pprint(vocab)
-    pprint(f"not present: {list(set(vocab.keys()) - set(notes))}")
-    input()
-
     sequence_in = notes[:SEQUENCE_LENGTH]
     network_input = [get_best_representation(vocab, sound) for sound in sequence_in]
 
     return network_input
 
 
-def get_best_representation(vocab, sound):
+def get_best_representation(vocab, pattern):
     """assumption: all 12 single notes are present in vocabulary"""
-    if sound in vocab:
-        return vocab[sound]
+    if pattern in vocab.keys():
+        return vocab[pattern]
 
-    unknown_chord = chord.Chord(sound)
+    chord_sounds = [int(sound) for sound in pattern.split(".")]
+    unknown_chord = chord.Chord(chord_sounds)
     root_note = unknown_chord.root()
     print(f"*** Mapping {unknown_chord} to {root_note} ***")
-    return vocab[root_note]
+    return vocab[root_note.name]
 
 
 def save_midi_file(prediction_output):
