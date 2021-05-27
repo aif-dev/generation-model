@@ -133,14 +133,27 @@ def load_vocabulary_from_training():
 
 
 def prepare_sequences_for_training(notes, vocab, vocab_size, batch_size):
+    training_split = 1 - VALIDATION_SPLIT
+    dataset_split = math.ceil(training_split * len(notes))
+    training_sequence = NotesSequence(
+        notes[:dataset_split],
+        batch_size,
+        SEQUENCE_LENGTH,
+        vocab,
+        vocab_size,
+        NUM_NOTES_TO_PREDICT,
+    )
+    validation_sequence = NotesSequence(
+        notes[dataset_split:],
+        batch_size,
+        SEQUENCE_LENGTH,
+        vocab,
+        vocab_size,
+        NUM_NOTES_TO_PREDICT,
+    )
 
-        training_split = 1 - VALIDATION_SPLIT;
-        dataset_split = math.ceil(training_split * len(notes))
-        training_sequence = NotesSequence(notes[:dataset_split], batch_size, SEQUENCE_LENGTH, vocab, vocab_size, NUM_NOTES_TO_PREDICT)
-        validation_sequence = NotesSequence(notes[dataset_split:], batch_size, SEQUENCE_LENGTH, vocab, vocab_size, NUM_NOTES_TO_PREDICT)
-        
-        return(training_sequence, validation_sequence)
-        
+    return training_sequence, validation_sequence
+
 
 def prepare_sequences_for_prediction(notes, vocab):
     network_input = []

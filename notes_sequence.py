@@ -4,15 +4,15 @@ import numpy as np
 
 
 class NotesSequence(Sequence):
-
     def __init__(
-            self,
-            notes,
-            batch_size,
-            sequence_length,
-            vocab,
-            vocab_size,
-            num_notes_to_predict):
+        self,
+        notes,
+        batch_size,
+        sequence_length,
+        vocab,
+        vocab_size,
+        num_notes_to_predict,
+    ):
         self.notes = notes
         self.batch_size = batch_size
         self.sequence_length = sequence_length
@@ -30,15 +30,17 @@ class NotesSequence(Sequence):
         for i in range(len(batch)):
             sequence_in = self.notes[idx * self.batch_size + i: idx * self.batch_size + i + self.sequence_length]
             note_out = self.notes[idx * self.batch_size + i + self.sequence_length]
+
             network_input.append([self.vocab[note] for note in sequence_in])
             network_output.append(self.vocab[note_out])
 
         n_patterns = len(network_input)
 
         unnormalized_network_input = np.reshape(
-            network_input, (n_patterns, self.sequence_length, self.num_notes_to_predict))
+            network_input, (n_patterns, self.sequence_length, self.num_notes_to_predict)
+        )
         normalized_network_input = unnormalized_network_input / float(self.vocab_size)
 
         network_output = np_utils.to_categorical(network_output, self.vocab_size)
 
-        return (normalized_network_input, network_output)
+        return normalized_network_input, network_output
