@@ -20,7 +20,10 @@ def get_latest_checkpoint():
         return None
 
     checkpoints = ["checkpoints/" + name for name in os.listdir("checkpoints/")]
-    return max(checkpoints, key=os.path.getctime)
+    if checkpoints:
+        return max(checkpoints, key=os.path.getctime)
+    else:
+        return None
 
 
 def train_network():
