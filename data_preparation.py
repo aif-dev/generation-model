@@ -71,7 +71,7 @@ def get_notes_from_file(file):
 
     for element in notes_to_parse:
         if isinstance(element, note.Note):
-            notes.append(str(element.pitch))
+            notes.append(str(element.name))
         elif isinstance(element, chord.Chord):
             notes.append(".".join(str(n) for n in element.normalOrder))
 
