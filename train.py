@@ -20,7 +20,10 @@ def get_latest_checkpoint():
         return None
 
     checkpoints = ["checkpoints/" + name for name in os.listdir("checkpoints/")]
-    return max(checkpoints, key=os.path.getctime)
+    if checkpoints:
+        return max(checkpoints, key=os.path.getctime)
+    else:
+        return None
 
 
 def train_network():
@@ -45,16 +48,16 @@ def train_network():
 
 def train(model, network_input, network_output):
     filepath = "checkpoints/weights-improvement-{epoch:02d}-{loss:.4f}-bigger.hdf5"
-    modelCheckpoint = ModelCheckpoint(
+    model_checkpoint = ModelCheckpoint(
         filepath, monitor="loss", verbose=0, save_best_only=True, mode="min"
     )
 
-    earlyStopping = EarlyStopping(monitor="val_loss", patience=3)
+    early_stopping = EarlyStopping(monitor="val_loss", patience=3)
 
     logdir = LOG_DIR + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    tensorBoard = TensorBoard(log_dir=logdir)
+    tensorboard = TensorBoard(log_dir=logdir)
 
-    callbacks_list = [modelCheckpoint, earlyStopping, tensorBoard]
+    callbacks_list = [model_checkpoint, early_stopping, tensorboard]
 
     model.fit(
         network_input,
