@@ -21,14 +21,18 @@ class NotesSequence(Sequence):
         self.num_notes_to_predict = num_notes_to_predict
 
     def __len__(self):
-        return math.floor(len(self.notes[:-self.sequence_length]) / self.batch_size)
+        return math.floor(len(self.notes[: -self.sequence_length]) / self.batch_size)
 
     def __getitem__(self, idx):
         network_input = []
         network_output = []
-        batch = self.notes[idx * self.batch_size : (idx + 1) * self.batch_size]
-        for i in range(len(batch)):
-            sequence_in = self.notes[idx * self.batch_size + i: idx * self.batch_size + i + self.sequence_length]
+        for i in range(self.batch_size):
+            sequence_in = self.notes[
+                idx * self.batch_size
+                + i : idx * self.batch_size
+                + i
+                + self.sequence_length
+            ]
             note_out = self.notes[idx * self.batch_size + i + self.sequence_length]
 
             network_input.append([self.vocab[note] for note in sequence_in])

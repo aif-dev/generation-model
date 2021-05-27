@@ -68,6 +68,7 @@ def train(model, training_sequence, validation_sequence):
         validation_data=validation_sequence,
         epochs=200,
         callbacks=callbacks_list,
+        shuffle=True,
     )
 
 
