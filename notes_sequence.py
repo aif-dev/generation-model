@@ -1,5 +1,5 @@
-from keras.utils import Sequence, np_utils
 import math
+from keras.utils import Sequence, np_utils
 import numpy as np
 
 
