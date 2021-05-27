@@ -10,6 +10,7 @@ from data_preparation import (
     get_notes_from_dataset,
     prepare_sequences_for_training,
     create_vocabulary_for_training,
+    clean_data_and_checkpoints,
 )
 
 
@@ -82,13 +83,12 @@ def parse_cli_args():
         print(usage_str)
         sys.exit(2)
 
-    for opt, arg in opts:
+    for opt, _ in opts:
         if opt == "-h":
             print(usage_str)
             sys.exit(0)
         elif opt in ["-c", "--clean"]:
-            is_file_present = True
-            file = arg
+            clean_data_and_checkpoints()
 
 
 if __name__ == "__main__":
@@ -96,4 +96,5 @@ if __name__ == "__main__":
     for gpu in gpus:
         tf.config.experimental.set_memory_growth(gpu, True)
 
+    parse_cli_args()
     train_network()

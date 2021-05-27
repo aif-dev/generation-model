@@ -31,10 +31,6 @@ def move_data():
     shutil.rmtree(maestro_path)
 
 
-def cleanup():
-    os.remove()
-
-
 if __name__ == "__main__":
     if not os.path.isdir(DATASET_PATH):
         os.mkdir(DATASET_PATH)
