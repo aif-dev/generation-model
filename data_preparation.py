@@ -1,16 +1,15 @@
 import glob
 import os
 import sys
-import datetime
 import pickle
+import math
+import datetime
 import shutil
-from pprint import pprint
 from multiprocessing import Pool, cpu_count
 import checksumdir
-import numpy as np
 from music21 import converter, instrument, stream, note, chord
-from keras.utils import np_utils
 from random_word import RandomWords
+from notes_sequence import NotesSequence
 
 
 CHECKPOINTS_DIR = "checkpoints"
@@ -21,6 +20,7 @@ VOCABULARY_FILENAME = "vocabulary"
 HASH_FILENAME = "dataset_hash"
 RESULTS_DIR = "results"
 SEQUENCE_LENGTH = 100
+VALIDATION_SPLIT = 0.2
 
 """
 changing this value requires refactoring
@@ -137,28 +137,27 @@ def load_vocabulary_from_training():
         return pickle.load(vocab_data_file)
 
 
-def prepare_sequences_for_training(notes, vocab, vocab_size):
-    network_input = []
-    network_output = []
-
-    # create input sequences and the corresponding outputs
-    for i in range(len(notes) - SEQUENCE_LENGTH):
-        sequence_in = notes[i : i + SEQUENCE_LENGTH]
-        note_out = notes[i + SEQUENCE_LENGTH]
-        network_input.append([vocab[sound] for sound in sequence_in])
-        network_output.append(vocab[note_out])
-
-    n_patterns = len(network_input)
-
-    # reshape the input into a format compatible with LSTM layers
-    unnormalized_network_input = np.reshape(
-        network_input, (n_patterns, SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT)
+def prepare_sequences_for_training(notes, vocab, vocab_size, batch_size):
+    training_split = 1 - VALIDATION_SPLIT
+    dataset_split = math.ceil(training_split * len(notes))
+    training_sequence = NotesSequence(
+        notes[:dataset_split],
+        batch_size,
+        SEQUENCE_LENGTH,
+        vocab,
+        vocab_size,
+        NUM_NOTES_TO_PREDICT,
     )
-    normalized_network_input = unnormalized_network_input / float(vocab_size)
+    validation_sequence = NotesSequence(
+        notes[dataset_split:],
+        batch_size,
+        SEQUENCE_LENGTH,
+        vocab,
+        vocab_size,
+        NUM_NOTES_TO_PREDICT,
+    )
 
-    network_output = np_utils.to_categorical(network_output)
-
-    return (normalized_network_input, network_output)
+    return training_sequence, validation_sequence
 
 
 def prepare_sequence_for_prediction(notes, vocab):
@@ -205,6 +204,7 @@ def save_midi_file(prediction_output):
             output_notes.append(new_chord)
         # pattern is a note
         else:
+            new_note = note.Note(pattern)
             new_note.offset = offset
             new_note.storedInstrument = instrument.Piano()
             output_notes.append(new_note)
