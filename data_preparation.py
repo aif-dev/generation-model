@@ -3,6 +3,7 @@ import os
 import sys
 import datetime
 import pickle
+from pprint import pprint
 from multiprocessing import Pool, cpu_count
 import checksumdir
 import numpy as np
@@ -197,7 +198,6 @@ def save_midi_file(prediction_output):
             output_notes.append(new_chord)
         # pattern is a note
         else:
-            new_note = note.Note(pattern)
             new_note.offset = offset
             new_note.storedInstrument = instrument.Piano()
             output_notes.append(new_note)
