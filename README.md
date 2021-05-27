@@ -17,7 +17,7 @@ python populate_dataset.py
 ### To train the network run:
 
 ```
-python train.py
+python train.py -h
 ```
 
 The network will use every midi file in ./midi_songs to train the network. The midi files should only contain a single instrument to get the most out of the training.
