@@ -29,6 +29,10 @@ data_preparation.py -> loop inside prepare_sequences_for_training() [out sequenc
 NUM_NOTES_TO_PREDICT = 1
 
 
+def clean_data_and_checkpoints():
+    pass
+
+
 def save_data_hash(hash_value):
     if not os.path.isdir(DATA_DIR):
         os.mkdir(DATA_DIR)

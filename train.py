@@ -1,5 +1,7 @@
 import os
 import datetime
+import getopt
+import sys
 import tensorflow as tf
 from keras.models import load_model
 from keras.callbacks import ModelCheckpoint, EarlyStopping, TensorBoard
@@ -67,6 +69,26 @@ def train(model, network_input, network_output):
         batch_size=128,
         callbacks=callbacks_list,
     )
+
+
+def parse_cli_args():
+    usage_str = (
+        f"Usage: {sys.argv[0]} [-h] [-c | --clean (clean data/ and checkpoints/)]"
+    )
+
+    try:
+        opts, _ = getopt.getopt(sys.argv[1:], "hc", ["clean"])
+    except getopt.GetoptError:
+        print(usage_str)
+        sys.exit(2)
+
+    for opt, arg in opts:
+        if opt == "-h":
+            print(usage_str)
+            sys.exit(0)
+        elif opt in ["-c", "--clean"]:
+            is_file_present = True
+            file = arg
 
 
 if __name__ == "__main__":
