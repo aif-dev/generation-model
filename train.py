@@ -29,10 +29,9 @@ def train_network():
     vocab = create_vocabulary_for_training(notes)
     vocab_size = len(vocab)
 
-    (training_sequence, validation_sequence) = prepare_sequences_for_training(
+    training_sequence, validation_sequence = prepare_sequences_for_training(
         notes, vocab, vocab_size, BATCH_SIZE
     )
-    
 
     latest_checkpoint = get_latest_checkpoint()
 
@@ -59,7 +58,7 @@ def train(model, training_sequence, validation_sequence):
     callbacks_list = [modelCheckpoint, earlyStopping, tensorBoard]
 
     model.fit(
-        x = training_sequence,
+        x=training_sequence,
         validation_data=validation_sequence,
         epochs=200,
         callbacks=callbacks_list,
