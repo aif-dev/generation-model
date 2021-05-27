@@ -138,7 +138,7 @@ def prepare_sequences_for_training(notes, vocab, vocab_size):
     for i in range(len(notes) - SEQUENCE_LENGTH):
         sequence_in = notes[i : i + SEQUENCE_LENGTH]
         note_out = notes[i + SEQUENCE_LENGTH]
-        network_input.append([vocab[note] for note in sequence_in])
+        network_input.append([vocab[sound] for sound in sequence_in])
         network_output.append(vocab[note_out])
 
     n_patterns = len(network_input)
@@ -161,10 +161,26 @@ def prepare_sequence_for_prediction(notes, vocab):
         )
         sys.exit(1)
 
+    from pprint import pprint
+
+    pprint(vocab)
+    input()
+
     sequence_in = notes[:SEQUENCE_LENGTH]
-    network_input = [vocab[note] for note in sequence_in]
+    network_input = [get_best_representation(vocab, sound) for sound in sequence_in]
 
     return network_input
+
+
+def get_best_representation(vocab, sound):
+    if sound in vocab:
+        return vocab[sound]
+
+    raise Exception("Not implemented")
+    if ("." in sound) or sound.isdigit():
+        chord = chord.Chord(sound)
+    else:
+        pass
 
 
 def save_midi_file(prediction_output):
