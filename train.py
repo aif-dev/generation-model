@@ -10,7 +10,8 @@ from data_preparation import (
     get_notes_from_dataset,
     prepare_sequences_for_training,
     create_vocabulary_for_training,
-    clean_training_data_and_checkpoints,
+    clear_training_data,
+    clear_checkpoints,
 )
 
 
@@ -73,12 +74,10 @@ def train(model, training_sequence, validation_sequence):
 
 
 def parse_cli_args():
-    usage_str = (
-        f"Usage: {sys.argv[0]} [-h] [-c | --clean (clean data/ and checkpoints/)]"
-    )
+    usage_str = f"Usage: {sys.argv[0]} [-h] [--clear-data (clear training_data/)] [--clear-checkpoints (clear checkpoints/)]"
 
     try:
-        opts, _ = getopt.getopt(sys.argv[1:], "hc", ["clean"])
+        opts, _ = getopt.getopt(sys.argv[1:], "h", ["clear-data", "clear-checkpoints"])
     except getopt.GetoptError:
         print(usage_str)
         sys.exit(2)
@@ -87,8 +86,10 @@ def parse_cli_args():
         if opt == "-h":
             print(usage_str)
             sys.exit(0)
-        elif opt in ["-c", "--clean"]:
-            clean_training_data_and_checkpoints()
+        elif opt == "--clear-data":
+            clear_training_data()
+        elif opt == "--clear-checkpoints":
+            clear_checkpoints()
 
 
 if __name__ == "__main__":

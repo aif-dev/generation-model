@@ -31,16 +31,18 @@ data_preparation.py -> loop inside prepare_sequences_for_training() [out sequenc
 NUM_NOTES_TO_PREDICT = 1
 
 
-def clean_training_data_and_checkpoints():
-    try:
-        shutil.rmtree(TRAINING_DATA_DIR)
-    except FileNotFoundError:
-        print("Training data directory doesn't exist")
-
+def clear_checkpoints():
     try:
         shutil.rmtree(CHECKPOINTS_DIR)
     except FileNotFoundError:
         print("Checkpoints directory doesn't exist")
+
+
+def clear_training_data():
+    try:
+        shutil.rmtree(TRAINING_DATA_DIR)
+    except FileNotFoundError:
+        print("Training data directory doesn't exist")
 
 
 def save_data_hash(hash_value):
