@@ -57,7 +57,7 @@ def train(model, training_sequence, validation_sequence):
         filepath, monitor="loss", verbose=0, save_best_only=True, mode="min"
     )
 
-    early_stopping = EarlyStopping(monitor="val_loss", patience=3)
+    early_stopping = EarlyStopping(monitor="val_loss", patience=5)
 
     logdir = LOG_DIR + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     tensorboard = TensorBoard(log_dir=logdir)
