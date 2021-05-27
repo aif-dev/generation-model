@@ -3,6 +3,7 @@ import os
 import sys
 import datetime
 import pickle
+import shutil
 from pprint import pprint
 from multiprocessing import Pool, cpu_count
 import checksumdir
@@ -12,6 +13,7 @@ from keras.utils import np_utils
 from random_word import RandomWords
 
 
+CHECKPOINTS_DIR = "checkpoints"
 MIDI_SONGS_DIR = "midi_songs"
 DATA_DIR = "data"
 NOTES_FILENAME = "notes"
@@ -27,6 +29,11 @@ predict.py -> loop inside generate_notes() [getting prediction]
 data_preparation.py -> loop inside prepare_sequences_for_training() [out sequences]
 """
 NUM_NOTES_TO_PREDICT = 1
+
+
+def clean_data_and_checkpoints():
+    shutil.rmtree(DATA_DIR)
+    shutil.rmtree(CHECKPOINTS_DIR)
 
 
 def save_data_hash(hash_value):
