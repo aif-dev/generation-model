@@ -27,11 +27,11 @@ The network will use every midi file in ./midi_songs to train the network. The m
 ### To start ngrok server with Tensorboard:
 
 ```
-python tensorboard.py -p <LOCAL_PORT>
+python tensorboard.py -h
 ```
 
 ### To generate music run:
 
 ```
-python predict.py
+python predict.py -h
 ```
