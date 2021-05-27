@@ -26,8 +26,7 @@ class NotesSequence(Sequence):
     def __getitem__(self, idx):
         network_input = []
         network_output = []
-        batch = self.notes[idx * self.batch_size : (idx + 1) * self.batch_size]
-        for i in range(len(batch)):
+        for i in range(self.batch_size):
             sequence_in = self.notes[idx * self.batch_size + i: idx * self.batch_size + i + self.sequence_length]
             note_out = self.notes[idx * self.batch_size + i + self.sequence_length]
 
