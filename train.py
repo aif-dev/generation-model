@@ -12,6 +12,7 @@ from data_preparation import (
 
 
 LOG_DIR = "logs/"
+BATCH_SIZE = 128
 
 
 def get_latest_checkpoint():
@@ -28,9 +29,10 @@ def train_network():
     vocab = create_vocabulary_for_training(notes)
     vocab_size = len(vocab)
 
-    network_input, network_output = prepare_sequences_for_training(
-        notes, vocab, vocab_size
+    (training_sequence, validation_sequence) = prepare_sequences_for_training(
+        notes, vocab, vocab_size, BATCH_SIZE
     )
+    
 
     latest_checkpoint = get_latest_checkpoint()
 
@@ -40,10 +42,10 @@ def train_network():
     else:
         model = create_network(vocab_size)
 
-    train(model, network_input, network_output)
+    train(model, training_sequence, validation_sequence)
 
 
-def train(model, network_input, network_output):
+def train(model, training_sequence, validation_sequence):
     filepath = "checkpoints/weights-improvement-{epoch:02d}-{loss:.4f}-bigger.hdf5"
     modelCheckpoint = ModelCheckpoint(
         filepath, monitor="loss", verbose=0, save_best_only=True, mode="min"
@@ -57,11 +59,9 @@ def train(model, network_input, network_output):
     callbacks_list = [modelCheckpoint, earlyStopping, tensorBoard]
 
     model.fit(
-        network_input,
-        network_output,
-        validation_split=0.2,
+        x = training_sequence,
+        validation_data=validation_sequence,
         epochs=200,
-        batch_size=128,
         callbacks=callbacks_list,
     )
 
