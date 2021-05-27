@@ -30,6 +30,7 @@ def get_best_weights_filename():
         loss = float(checkpoint.split("-")[3])
 
         if loss < lowest_loss:
+            lowest_loss = loss
             best_checkpoint = checkpoint
 
     print(f"*** Found checkpoint with the best weights: {best_checkpoint} ***")
