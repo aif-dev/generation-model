@@ -3,7 +3,7 @@ __pycache__
 checkpoints/
 .idea/
 venv/
-data/notes
-data/dataset_hash
+training_data/notes
+training_data/dataset_hash
 midi_songs/
 logs/

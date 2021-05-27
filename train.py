@@ -10,7 +10,7 @@ from data_preparation import (
     get_notes_from_dataset,
     prepare_sequences_for_training,
     create_vocabulary_for_training,
-    clean_data_and_checkpoints,
+    clean_training_data_and_checkpoints,
 )
 
 
@@ -88,7 +88,7 @@ def parse_cli_args():
             print(usage_str)
             sys.exit(0)
         elif opt in ["-c", "--clean"]:
-            clean_data_and_checkpoints()
+            clean_training_data_and_checkpoints()
 
 
 if __name__ == "__main__":

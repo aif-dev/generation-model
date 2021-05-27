@@ -14,7 +14,7 @@ from notes_sequence import NotesSequence
 
 CHECKPOINTS_DIR = "checkpoints"
 MIDI_SONGS_DIR = "midi_songs"
-DATA_DIR = "data"
+TRAINING_DATA_DIR = "training_data"
 NOTES_FILENAME = "notes"
 VOCABULARY_FILENAME = "vocabulary"
 HASH_FILENAME = "dataset_hash"
@@ -31,16 +31,16 @@ data_preparation.py -> loop inside prepare_sequences_for_training() [out sequenc
 NUM_NOTES_TO_PREDICT = 1
 
 
-def clean_data_and_checkpoints():
-    shutil.rmtree(DATA_DIR)
+def clean_training_data_and_checkpoints():
+    shutil.rmtree(TRAINING_DATA_DIR)
     shutil.rmtree(CHECKPOINTS_DIR)
 
 
 def save_data_hash(hash_value):
-    if not os.path.isdir(DATA_DIR):
-        os.mkdir(DATA_DIR)
+    if not os.path.isdir(TRAINING_DATA_DIR):
+        os.mkdir(TRAINING_DATA_DIR)
 
-    hash_file_path = os.path.join(DATA_DIR, HASH_FILENAME)
+    hash_file_path = os.path.join(TRAINING_DATA_DIR, HASH_FILENAME)
     with open(hash_file_path, "wb") as hash_file:
         pickle.dump(hash_value, hash_file)
 
@@ -48,7 +48,7 @@ def save_data_hash(hash_value):
 def is_data_changed():
     current_hash = checksumdir.dirhash(MIDI_SONGS_DIR)
 
-    hash_file_path = os.path.join(DATA_DIR, HASH_FILENAME)
+    hash_file_path = os.path.join(TRAINING_DATA_DIR, HASH_FILENAME)
     if not os.path.exists(hash_file_path):
         save_data_hash(current_hash)
         return True
@@ -86,7 +86,7 @@ def get_notes_from_file(file):
 
 
 def get_notes_from_dataset():
-    notes_path = os.path.join(DATA_DIR, NOTES_FILENAME)
+    notes_path = os.path.join(TRAINING_DATA_DIR, NOTES_FILENAME)
     notes = []
     if is_data_changed():
         try:
@@ -103,7 +103,7 @@ def get_notes_from_dataset():
                 pickle.dump(notes, notes_data_file)
 
         except:
-            hash_file_path = os.path.join(DATA_DIR, HASH_FILENAME)
+            hash_file_path = os.path.join(TRAINING_DATA_DIR, HASH_FILENAME)
             os.remove(hash_file_path)
             print("Removed the hash file")
             sys.exit(1)
@@ -122,7 +122,7 @@ def create_vocabulary_for_training(notes):
     sound_names = sorted(set(item for item in notes))
     vocab = dict((note, number) for number, note in enumerate(sound_names))
 
-    vocab_path = os.path.join(DATA_DIR, VOCABULARY_FILENAME)
+    vocab_path = os.path.join(TRAINING_DATA_DIR, VOCABULARY_FILENAME)
     with open(vocab_path, "wb") as vocab_data_file:
         pickle.dump(vocab, vocab_data_file)
 
@@ -132,7 +132,7 @@ def create_vocabulary_for_training(notes):
 def load_vocabulary_from_training():
     print("*** Restoring vocabulary used for training ***")
 
-    vocab_path = os.path.join(DATA_DIR, VOCABULARY_FILENAME)
+    vocab_path = os.path.join(TRAINING_DATA_DIR, VOCABULARY_FILENAME)
     with open(vocab_path, "rb") as vocab_data_file:
         return pickle.load(vocab_data_file)
 
