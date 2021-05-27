@@ -32,8 +32,15 @@ NUM_NOTES_TO_PREDICT = 1
 
 
 def clean_training_data_and_checkpoints():
-    shutil.rmtree(TRAINING_DATA_DIR)
-    shutil.rmtree(CHECKPOINTS_DIR)
+    try:
+        shutil.rmtree(TRAINING_DATA_DIR)
+    except FileNotFoundError:
+        print("Training data directory doesn't exist")
+
+    try:
+        shutil.rmtree(CHECKPOINTS_DIR)
+    except FileNotFoundError:
+        print("Checkpoints directory doesn't exist")
 
 
 def save_data_hash(hash_value):
