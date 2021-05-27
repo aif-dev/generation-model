@@ -154,11 +154,15 @@ def prepare_sequences_for_training(notes, vocab, vocab_size):
     return (normalized_network_input, network_output)
 
 
-def prepare_sequences_for_prediction(notes, vocab):
-    network_input = []
-    for i in range(len(notes) - SEQUENCE_LENGTH):
-        sequence_in = notes[i : i + SEQUENCE_LENGTH]
-        network_input.append([vocab[note] for note in sequence_in])
+def prepare_sequence_for_prediction(notes, vocab):
+    if len(notes) < SEQUENCE_LENGTH:
+        print(
+            f"File is to short. Min length: {SEQUENCE_LENGTH} sounds, provided: {len(notes)}."
+        )
+        sys.exit(1)
+
+    sequence_in = notes[:SEQUENCE_LENGTH]
+    network_input = [vocab[note] for note in sequence_in]
 
     return network_input
 
