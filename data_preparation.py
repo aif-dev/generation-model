@@ -70,7 +70,7 @@ def get_notes_from_file(file):
 
     for element in notes_to_parse:
         if isinstance(element, note.Note):
-            notes.append(str(element.name))
+            notes.append(element.name)
         elif isinstance(element, chord.Chord):
             notes.append(".".join(str(n) for n in element.normalOrder))
 
@@ -87,9 +87,9 @@ def get_notes_from_dataset():
                     get_notes_from_file, glob.glob(f"{MIDI_SONGS_DIR}/*.mid")
                 )
 
-                for notes_from_file in notes_from_files:
-                    for note in notes_from_file:
-                        notes.append(note)
+            for notes_from_file in notes_from_files:
+                for note in notes_from_file:
+                    notes.append(note)
 
             with open(notes_path, "wb") as notes_data_file:
                 pickle.dump(notes, notes_data_file)
