@@ -3,6 +3,8 @@ import os
 import sys
 import pickle
 import math
+import datetime
+import shutil
 from multiprocessing import Pool, cpu_count
 import checksumdir
 from music21 import converter, instrument, stream, note, chord
@@ -10,6 +12,7 @@ from random_word import RandomWords
 from notes_sequence import NotesSequence
 
 
+CHECKPOINTS_DIR = "checkpoints"
 MIDI_SONGS_DIR = "midi_songs"
 DATA_DIR = "data"
 NOTES_FILENAME = "notes"
@@ -26,6 +29,11 @@ predict.py -> loop inside generate_notes() [getting prediction]
 data_preparation.py -> loop inside prepare_sequences_for_training() [out sequences]
 """
 NUM_NOTES_TO_PREDICT = 1
+
+
+def clean_data_and_checkpoints():
+    shutil.rmtree(DATA_DIR)
+    shutil.rmtree(CHECKPOINTS_DIR)
 
 
 def save_data_hash(hash_value):
@@ -56,11 +64,10 @@ def is_data_changed():
 
 
 def get_notes_from_file(file):
-    notes = []
-    midi = converter.parse(file)
-
     print(f"Parsing {file}")
 
+    midi = converter.parse(file)
+    notes = []
     try:
         # file has instrument parts
         instrument_stream = instrument.partitionByInstrument(midi)
@@ -71,7 +78,7 @@ def get_notes_from_file(file):
 
     for element in notes_to_parse:
         if isinstance(element, note.Note):
-            notes.append(str(element.pitch))
+            notes.append(element.name)
         elif isinstance(element, chord.Chord):
             notes.append(".".join(str(n) for n in element.normalOrder))
 
@@ -79,8 +86,6 @@ def get_notes_from_file(file):
 
 
 def get_notes_from_dataset():
-    """Get all the notes and chords from the midi files in the ./midi_songs directory"""
-
     notes_path = os.path.join(DATA_DIR, NOTES_FILENAME)
     notes = []
     if is_data_changed():
@@ -90,9 +95,9 @@ def get_notes_from_dataset():
                     get_notes_from_file, glob.glob(f"{MIDI_SONGS_DIR}/*.mid")
                 )
 
-                for notes_from_file in notes_from_files:
-                    for note in notes_from_file:
-                        notes.append(note)
+            for notes_from_file in notes_from_files:
+                for note in notes_from_file:
+                    notes.append(note)
 
             with open(notes_path, "wb") as notes_data_file:
                 pickle.dump(notes, notes_data_file)
@@ -155,18 +160,32 @@ def prepare_sequences_for_training(notes, vocab, vocab_size, batch_size):
     return training_sequence, validation_sequence
 
 
-def prepare_sequences_for_prediction(notes, vocab):
-    network_input = []
-    for i in range(len(notes) - SEQUENCE_LENGTH):
-        sequence_in = notes[i : i + SEQUENCE_LENGTH]
-        network_input.append([vocab[note] for note in sequence_in])
+def prepare_sequence_for_prediction(notes, vocab):
+    if len(notes) < SEQUENCE_LENGTH:
+        print(
+            f"File is to short. Min length: {SEQUENCE_LENGTH} sounds, provided: {len(notes)}."
+        )
+        sys.exit(1)
+
+    sequence_in = notes[:SEQUENCE_LENGTH]
+    network_input = [get_best_representation(vocab, sound) for sound in sequence_in]
 
     return network_input
 
 
+def get_best_representation(vocab, pattern):
+    """assumption: all 12 single notes are present in vocabulary"""
+    if pattern in vocab.keys():
+        return vocab[pattern]
+
+    chord_sounds = [int(sound) for sound in pattern.split(".")]
+    unknown_chord = chord.Chord(chord_sounds)
+    root_note = unknown_chord.root()
+    print(f"*** Mapping {unknown_chord} to {root_note} ***")
+    return vocab[root_note.name]
+
+
 def save_midi_file(prediction_output):
-    """convert the output from the prediction to notes and create a midi file
-    from the notes"""
     offset = 0
     output_notes = []
 
@@ -185,6 +204,7 @@ def save_midi_file(prediction_output):
             output_notes.append(new_chord)
         # pattern is a note
         else:
+            new_note = note.Note(pattern)
             new_note.offset = offset
             new_note.storedInstrument = instrument.Piano()
             output_notes.append(new_note)
@@ -192,11 +212,15 @@ def save_midi_file(prediction_output):
         # increase offset each iteration so that notes do not stack
         offset += 0.5
 
-    random_words = RandomWords().get_random_words()
     output_name = ""
-    for i in range(2):
-        output_name += random_words[i] + "_"
-    output_name = output_name.rstrip("_").lower()
+    try:
+        random_words = RandomWords().get_random_words()
+        for i in range(2):
+            output_name += random_words[i] + "_"
+        output_name = output_name.rstrip("_").lower()
+
+    except:
+        output_name = f"output_{datetime.datetime.now()}"
 
     midi_stream = stream.Stream(output_notes)
     midi_stream.write("midi", fp=f"{RESULTS_DIR}/{output_name}.mid")
