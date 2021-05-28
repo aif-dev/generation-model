@@ -87,9 +87,10 @@ def get_notes_from_file(file):
 
     for element in notes_to_parse:
         if isinstance(element, note.Note):
-            notes.append(element.name)
+            notes.append(str(element.pitch.name))
         elif isinstance(element, chord.Chord):
-            notes.append(".".join(str(n) for n in element.normalOrder))
+            midis = [pitch.midi for pitch in element.pitches]
+            notes.append(".".join(str(midi) for midi in sorted(midis)))
 
     return notes
 
@@ -134,6 +135,8 @@ def create_vocabulary_for_training(notes):
     vocab_path = os.path.join(TRAINING_DATA_DIR, VOCABULARY_FILENAME)
     with open(vocab_path, "wb") as vocab_data_file:
         pickle.dump(vocab, vocab_data_file)
+
+    print(f"*** vocabulary size: {len(vocab)} ***")
 
     return vocab
 
@@ -184,6 +187,8 @@ def prepare_sequence_for_prediction(notes, vocab):
 
 def get_best_representation(vocab, pattern):
     """assumption: all 12 single notes are present in vocabulary"""
+    raise Exception("Fix new representation")
+
     if pattern in vocab.keys():
         return vocab[pattern]
 
@@ -195,6 +200,8 @@ def get_best_representation(vocab, pattern):
 
 
 def save_midi_file(prediction_output):
+    raise Exception("Fix new representation")
+
     offset = 0
     output_notes = []
 
