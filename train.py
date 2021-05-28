@@ -17,7 +17,7 @@ from data_preparation import (
 
 LOG_DIR = "logs/"
 BATCH_SIZE = 64
-DATASET_PERCENT = 0.05
+DATASET_PERCENT = 0.02
 
 
 def get_latest_checkpoint():
