@@ -16,7 +16,8 @@ from data_preparation import (
 
 
 LOG_DIR = "logs/"
-BATCH_SIZE = 128
+BATCH_SIZE = 64
+DATASET_PERCENT = 0.05
 
 
 def get_latest_checkpoint():
@@ -33,6 +34,7 @@ def get_latest_checkpoint():
 
 def train_network():
     notes = get_notes_from_dataset()
+    notes = notes[: int(len(notes) * DATASET_PERCENT)]
     vocab = create_vocabulary_for_training(notes)
     vocab_size = len(vocab)
 
