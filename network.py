@@ -39,19 +39,20 @@ def create_network(vocab_size, weights_filename=None):
     # https://github.com/Skuldur/Classical-Piano-Composer/pull/21
     # val_loss ~= 5
     #
-    # size = 1 <- up to 3
+    # lstm_units = 512
+    # dropout_rate = 0.3
     # model = Sequential()
     # model.add(
     #     LSTM(
-    #         512 * size,
+    #         lstm_units,
     #         input_shape=(SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT),
     #         return_sequences=True,
     #     )
     # )
-    # model.add(Dropout(0.3))
-    # model.add(LSTM(512 * size, return_sequences=True))
-    # model.add(Dropout(0.3))
-    # model.add(LSTM(512 * size))
+    # model.add(Dropout(dropout_rate))
+    # model.add(LSTM(lstm_units, return_sequences=True))
+    # model.add(Dropout(dropout_rate))
+    # model.add(LSTM(lstm_units))
     # model.add(BatchNorm())
     # model.add(Dense(vocab_size))
     # model.add(Activation("softmax"))
@@ -60,11 +61,12 @@ def create_network(vocab_size, weights_filename=None):
     # https://arxiv.org/pdf/2006.09838v1.pdf
     # val_loss ~= 3.6
     #
-    dropout_rate = 0.3
-    lstm_units = 512
     # optimizer = RMSprop(
     #     learning_rate=0.0001
     # )  # after decresing lr val_loss starts to oscilate around 3.6085
+    #
+    dropout_rate = 0.3
+    lstm_units = 256
     model = Sequential()
     model.add(
         LSTM(
