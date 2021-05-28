@@ -87,7 +87,7 @@ def get_notes_from_file(file):
 
     for element in notes_to_parse:
         if isinstance(element, note.Note):
-            notes.append(str(element.pitch.name))
+            notes.append(str(element.pitch.midi))
         elif isinstance(element, chord.Chord):
             midis = [pitch.midi for pitch in element.pitches]
             notes.append(".".join(str(midi) for midi in sorted(midis)))
