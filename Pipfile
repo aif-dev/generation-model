@@ -16,6 +16,9 @@ tensorflow = "~=2.4.0"
 wget = "~=3.2"
 pyngrok = "*"
 random-word = "*"
+pandas = "*"
+matplotlib = "*"
+statsmodels = "*"
 
 [requires]
 python_version = "3.8"
