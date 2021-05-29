@@ -6,9 +6,13 @@ from keras.layers import (
     BatchNormalization as BatchNorm,
     Activation,
     GRU,
+    Embedding,
+    Flatten,
+    TimeDistributed,
 )
-from keras.optimizers import RMSprop
+from keras.optimizers import RMSprop, Adam
 from keras.regularizers import l1_l2
+from tensorflow.compat.v1.keras.layers import CuDNNLSTM
 from data_preparation import SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT
 
 
@@ -65,26 +69,49 @@ def create_network(vocab_size, weights_filename=None):
     #     learning_rate=0.0001
     # )  # after decresing lr val_loss starts to oscilate around 3.6085
     #
-    dropout_rate = 0.3
-    lstm_units = 256
+    # dropout_rate = 0.3
+    # lstm_units = 256
+    # model = Sequential()
+    # model.add(
+    #     LSTM(
+    #         lstm_units,
+    #         input_shape=(SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT),
+    #         return_sequences=True,
+    #     )
+    # )
+    # model.add(Dense(vocab_size))
+    # model.add(Dropout(dropout_rate))
+    # model.add(LSTM(lstm_units, return_sequences=True))
+    # model.add(Dropout(dropout_rate))
+    # model.add(LSTM(lstm_units))
+    # model.add(Dense(256))
+    # model.add(Dropout(dropout_rate))
+    # model.add(Dense(vocab_size))
+    # model.add(Activation("softmax"))
+    # model.compile(loss="categorical_crossentropy", optimizer="rmsprop")
+
+    # custom
+    # val_loss ~=
+    #
+    lstm_units = 128
     model = Sequential()
     model.add(
-        LSTM(
+        CuDNNLSTM(
             lstm_units,
             input_shape=(SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT),
             return_sequences=True,
         )
     )
-    model.add(Dense(vocab_size))
-    model.add(Dropout(dropout_rate))
-    model.add(LSTM(lstm_units, return_sequences=True))
-    model.add(Dropout(dropout_rate))
-    model.add(LSTM(lstm_units))
-    model.add(Dense(256))
-    model.add(Dropout(dropout_rate))
+    model.add(BatchNorm())
+    model.add(CuDNNLSTM(lstm_units, return_sequences=True))
+    model.add(BatchNorm())
+    model.add(CuDNNLSTM(lstm_units, return_sequences=True))
+    model.add(BatchNorm())
+    model.add(CuDNNLSTM(lstm_units))
+    model.add(BatchNorm())
     model.add(Dense(vocab_size))
     model.add(Activation("softmax"))
-    model.compile(loss="categorical_crossentropy", optimizer="rmsprop")
+    model.compile(loss="categorical_crossentropy", optimizer="rmsprop", metrics=["acc"])
 
     # https://www.tandfonline.com/doi/full/10.1080/25765299.2019.1649972
     # val_loss ~= 3.6
@@ -111,6 +138,44 @@ def create_network(vocab_size, weights_filename=None):
     # model.add(Dense(vocab_size))
     # model.add(Activation("softmax"))
     # model.compile(loss="categorical_crossentropy", optimizer="rmsprop")
+
+    # https://github.com/subpath/Keras_music_gereration/blob/master/Music%20gerenation%20with%20Keras%20and%20TF.ipynb
+    # https://stackoverflow.com/questions/58382732/very-low-accuracy-with-lstm
+    # val_loss ~=
+    #
+    # model = Sequential()
+    # # model.add(
+    # #     Embedding(input_dim=vocab_size, output_dim=64, input_length=SEQUENCE_LENGTH)
+    # # )
+    # model.add(
+    #     CuDNNLSTM(
+    #         256,
+    #         input_shape=(SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT),
+    #         return_sequences=True,
+    #     )
+    # )
+    # # model.add(Dropout(0.6))
+    # model.add(
+    #     CuDNNLSTM(
+    #         128,
+    #         input_shape=(SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT),
+    #         return_sequences=True,
+    #     )
+    # )
+    # # model.add(Dropout(0.6))
+    # model.add(
+    #     CuDNNLSTM(
+    #         64,
+    #         input_shape=(SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT),
+    #         return_sequences=False,
+    #     )
+    # )
+    # model.add(Dropout(0.6))
+    # model.add(Dense(vocab_size))
+    # model.add(Activation("softmax"))
+    # optimizer = Adam(lr=0.001)
+    # model.compile(loss="categorical_crossentropy", optimizer=optimizer, metrics=["acc"])
+    # print(model.summary())
 
     # https://www.atlantis-press.com/journals/ijcis/125941516/view
     # val_loss ~= 3.6
