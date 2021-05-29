@@ -33,9 +33,7 @@ def parse_cli_args():
     return port
 
 
-if __name__ == "__main__":
-    port = parse_cli_args()
-
+def start_tensorboard(port):
     tensorboard_process = subprocess.Popen(
         ["tensorboard", "--logdir", LOG_DIR, "--port", str(port)]
     )
@@ -57,3 +55,8 @@ if __name__ == "__main__":
 
     ngrok.kill()
     tensorboard_process.terminate()
+
+
+if __name__ == "__main__":
+    port = parse_cli_args()
+    start_tensorboard(port)
