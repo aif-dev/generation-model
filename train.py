@@ -4,7 +4,7 @@ import getopt
 import sys
 import tensorflow as tf
 from keras.models import load_model
-from keras.callbacks import ModelCheckpoint, EarlyStopping, TensorBoard
+from keras.callbacks import ModelCheckpoint, EarlyStopping, TensorBoard, Callback
 from network import create_network
 from data_preparation import (
     get_notes_from_dataset,
@@ -16,8 +16,8 @@ from data_preparation import (
 
 
 LOG_DIR = "logs/"
-BATCH_SIZE = 64
-DATASET_PERCENT = 0.02
+BATCH_SIZE = 256
+DATASET_PERCENT = 0.5
 
 
 def get_latest_checkpoint():
