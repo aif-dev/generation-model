@@ -19,7 +19,7 @@ NOTES_FILENAME = "notes"
 VOCABULARY_FILENAME = "vocabulary"
 HASH_FILENAME = "dataset_hash"
 RESULTS_DIR = "results"
-SEQUENCE_LENGTH = 100
+SEQUENCE_LENGTH = 60
 VALIDATION_SPLIT = 0.2
 
 """
@@ -186,22 +186,19 @@ def prepare_sequence_for_prediction(notes, vocab):
 
 
 def get_best_representation(vocab, pattern):
-    """assumption: all 12 single notes are present in vocabulary"""
-    raise Exception("Fix new representation")
+    # assumption: all single notes are present in vocabulary
 
     if pattern in vocab.keys():
         return vocab[pattern]
 
-    chord_sounds = [int(sound) for sound in pattern.split(".")]
-    unknown_chord = chord.Chord(chord_sounds)
+    chord_midis = [int(midi) for midi in pattern.split(".")]
+    unknown_chord = chord.Chord(chord_midis)
     root_note = unknown_chord.root()
     print(f"*** Mapping {unknown_chord} to {root_note} ***")
-    return vocab[root_note.name]
+    return vocab[root_note.pitch.midi]
 
 
 def save_midi_file(prediction_output):
-    raise Exception("Fix new representation")
-
     offset = 0
     output_notes = []
 
@@ -209,18 +206,20 @@ def save_midi_file(prediction_output):
     for pattern in prediction_output:
         # pattern is a chord
         if ("." in pattern) or pattern.isdigit():
-            notes_in_chord = pattern.split(".")
+            midis_in_chord = [int(midi) for midi in pattern.split(".")]
             notes = []
-            for current_note in notes_in_chord:
-                new_note = note.Note(int(current_note))
+            for current_midi in midis_in_chord:
+                new_note = note.Note(current_midi)
                 new_note.storedInstrument = instrument.Piano()
                 notes.append(new_note)
+
             new_chord = chord.Chord(notes)
             new_chord.offset = offset
             output_notes.append(new_chord)
         # pattern is a note
         else:
-            new_note = note.Note(pattern)
+            midi = int(pattern)
+            new_note = note.Note(midi)
             new_note.offset = offset
             new_note.storedInstrument = instrument.Piano()
             output_notes.append(new_note)
@@ -240,3 +239,5 @@ def save_midi_file(prediction_output):
 
     midi_stream = stream.Stream(output_notes)
     midi_stream.write("midi", fp=f"{RESULTS_DIR}/{output_name}.mid")
+
+    print(f"Result saved as {output_name}")
