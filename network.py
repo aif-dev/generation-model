@@ -11,6 +11,7 @@ from keras.layers import (
     TimeDistributed,
     Reshape,
     Input,
+    GaussianNoise,
 )
 from keras.optimizers import RMSprop, Adam, SGD
 from keras.regularizers import l1_l2
@@ -95,21 +96,21 @@ def create_network(vocab_size, weights_filename=None):
     # custom
     # val_loss ~=
     #
-    lstm_units = 512
     model = Sequential()
     model.add(
-        CuDNNLSTM(
-            lstm_units,
+        LSTM(
+            256,
             input_shape=(SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT),
             return_sequences=True,
         )
     )
-    model.add(CuDNNLSTM(lstm_units, return_sequences=True))
-    model.add(CuDNNLSTM(lstm_units))
+    model.add(GaussianNoise(0.075))
+    model.add(LSTM(256))
     model.add(Dropout(0.3))
     model.add(Dense(vocab_size))
     model.add(Activation("softmax"))
-    model.compile(loss="categorical_crossentropy", optimizer="rmsprop", metrics=["acc"])
+    optimizer = RMSprop(clipvalue=0.01)
+    model.compile(loss="categorical_crossentropy", optimizer=optimizer, metrics=["acc"])
 
     # https://www.tandfonline.com/doi/full/10.1080/25765299.2019.1649972
     # val_loss ~= 3.6
