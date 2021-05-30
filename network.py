@@ -21,6 +21,10 @@ from tensorflow.compat.v1.keras.layers import CuDNNLSTM
 from data_preparation import SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT, PREDICTION_SIZE
 
 
+def Custom_Hamming_Loss(y_true, y_pred):
+    return mean(y_true * (1 - y_pred) + (1 - y_true) * y_pred)
+
+
 def create_network(weights_filename=None):
     # original (without recurrent_dropout for cudnn)
     # modified for matrix (88x1) representation of notes
@@ -44,7 +48,7 @@ def create_network(weights_filename=None):
     model.add(Dropout(0.3))
     model.add(Dense(PREDICTION_SIZE))
     model.add(Activation("sigmoid"))
-    model.compile(loss="binary_crossentropy", optimizer="rmsprop", metrics=["acc"])
+    model.compile(loss=Custom_Hamming_Loss, optimizer="rmsprop", metrics=["acc"])
 
     # our
     # val_loss ~= 1800
