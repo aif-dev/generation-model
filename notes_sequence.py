@@ -34,4 +34,4 @@ class NotesSequence(Sequence):
             network_input, (n_patterns, self.sequence_length, self.prediction_size)
         )
 
-        return network_input, network_output
+        return np.array(network_input), np.array(network_output)
