@@ -9,8 +9,10 @@ from keras.layers import (
     Embedding,
     Flatten,
     TimeDistributed,
+    Reshape,
+    Input,
 )
-from keras.optimizers import RMSprop, Adam
+from keras.optimizers import RMSprop, Adam, SGD
 from keras.regularizers import l1_l2
 from tensorflow.compat.v1.keras.layers import CuDNNLSTM
 from data_preparation import SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT
@@ -93,7 +95,7 @@ def create_network(vocab_size, weights_filename=None):
     # custom
     # val_loss ~=
     #
-    lstm_units = 128
+    lstm_units = 512
     model = Sequential()
     model.add(
         CuDNNLSTM(
@@ -102,13 +104,9 @@ def create_network(vocab_size, weights_filename=None):
             return_sequences=True,
         )
     )
-    model.add(BatchNorm())
     model.add(CuDNNLSTM(lstm_units, return_sequences=True))
-    model.add(BatchNorm())
-    model.add(CuDNNLSTM(lstm_units, return_sequences=True))
-    model.add(BatchNorm())
     model.add(CuDNNLSTM(lstm_units))
-    model.add(BatchNorm())
+    model.add(Dropout(0.3))
     model.add(Dense(vocab_size))
     model.add(Activation("softmax"))
     model.compile(loss="categorical_crossentropy", optimizer="rmsprop", metrics=["acc"])
@@ -175,7 +173,6 @@ def create_network(vocab_size, weights_filename=None):
     # model.add(Activation("softmax"))
     # optimizer = Adam(lr=0.001)
     # model.compile(loss="categorical_crossentropy", optimizer=optimizer, metrics=["acc"])
-    # print(model.summary())
 
     # https://www.atlantis-press.com/journals/ijcis/125941516/view
     # val_loss ~= 3.6
@@ -310,5 +307,7 @@ def create_network(vocab_size, weights_filename=None):
     if weights_filename:
         print(f"*** Loading weights from {weights_filename} ***")
         model.load_weights(weights_filename)
+
+    print(model.summary())
 
     return model

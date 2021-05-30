@@ -4,7 +4,12 @@ import getopt
 import sys
 import tensorflow as tf
 from keras.models import load_model
-from keras.callbacks import ModelCheckpoint, EarlyStopping, TensorBoard, Callback
+from keras.callbacks import (
+    ModelCheckpoint,
+    EarlyStopping,
+    TensorBoard,
+    ReduceLROnPlateau,
+)
 from network import create_network
 from data_preparation import (
     get_notes_from_dataset,
@@ -17,7 +22,7 @@ from data_preparation import (
 
 LOG_DIR = "logs/"
 BATCH_SIZE = 256
-DATASET_PERCENT = 0.5
+DATASET_PERCENT = 1
 
 
 def get_latest_checkpoint():
@@ -64,7 +69,16 @@ def train(model, training_sequence, validation_sequence):
     logdir = LOG_DIR + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     tensorboard = TensorBoard(log_dir=logdir)
 
-    callbacks_list = [model_checkpoint, early_stopping, tensorboard]
+    reduce_lr_on_pleateau = ReduceLROnPlateau(
+        monitor="val_loss", factor=0.2, patience=2, min_lr=1e-5
+    )
+
+    callbacks_list = [
+        model_checkpoint,
+        early_stopping,
+        tensorboard,
+        reduce_lr_on_pleateau,
+    ]
 
     model.fit(
         x=training_sequence,
