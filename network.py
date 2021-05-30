@@ -19,14 +19,15 @@ def create_network(vocab_size, weights_filename=None):
     model.add(LSTM(512, return_sequences=True))
     model.add(LSTM(512))
     model.add(BatchNorm())
+    model.add(Activation("relu"))
     model.add(Dropout(0.3))
     model.add(Dense(256))
-    model.add(Activation("relu"))
     model.add(BatchNorm())
+    model.add(Activation("relu"))
     model.add(Dropout(0.3))
     model.add(Dense(vocab_size))
     model.add(Activation("softmax"))
-    model.compile(loss="categorical_crossentropy", optimizer="rmsprop")
+    model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=['acc'])
 
     if weights_filename:
         print(f"*** Loading weights from {weights_filename} ***")
