@@ -5,8 +5,9 @@ import pickle
 import math
 import datetime
 import shutil
-from multiprocessing import Pool, cpu_count
 import checksumdir
+from multiprocessing import Pool, cpu_count
+import numpy as np
 from music21 import converter, instrument, stream, note, chord
 from random_word import RandomWords
 from notes_sequence import NotesSequence
@@ -86,11 +87,17 @@ def get_notes_from_file(file):
         notes_to_parse = midi.flat.notes
 
     for element in notes_to_parse:
+        pattern = np.zeros(88)
+
         if isinstance(element, note.Note):
-            notes.append(str(element.pitch.midi))
+            midi_pitch = element.pitch.midi
+            pattern[midi_pitch - 21] = 1
+            notes.append(pattern)
         elif isinstance(element, chord.Chord):
-            midis = [pitch.midi for pitch in element.pitches]
-            notes.append(".".join(str(midi) for midi in sorted(midis)))
+            for pitch in element.pitches:
+                midi_pitch = pitch.midi
+                pattern[midi_pitch - 21] = 1
+            notes.append(pattern)
 
     return notes
 
@@ -126,6 +133,8 @@ def get_notes_from_dataset():
 
 
 def create_vocabulary_for_training(notes):
+    raise Exception("Vocabulary is not needed")
+
     print("*** Creating new vocabulary ***")
 
     # these are either notes or chords
@@ -142,6 +151,8 @@ def create_vocabulary_for_training(notes):
 
 
 def load_vocabulary_from_training():
+    raise Exception("Vocabulary is not needed")
+
     print("*** Restoring vocabulary used for training ***")
 
     vocab_path = os.path.join(TRAINING_DATA_DIR, VOCABULARY_FILENAME)
@@ -149,23 +160,19 @@ def load_vocabulary_from_training():
         return pickle.load(vocab_data_file)
 
 
-def prepare_sequences_for_training(notes, vocab, vocab_size, batch_size):
+def prepare_sequences_for_training(notes, batch_size):
     training_split = 1 - VALIDATION_SPLIT
     dataset_split = math.ceil(training_split * len(notes))
     training_sequence = NotesSequence(
         notes[:dataset_split],
         batch_size,
         SEQUENCE_LENGTH,
-        vocab,
-        vocab_size,
         NUM_NOTES_TO_PREDICT,
     )
     validation_sequence = NotesSequence(
         notes[dataset_split:],
         batch_size,
         SEQUENCE_LENGTH,
-        vocab,
-        vocab_size,
         NUM_NOTES_TO_PREDICT,
     )
 
@@ -173,6 +180,8 @@ def prepare_sequences_for_training(notes, vocab, vocab_size, batch_size):
 
 
 def prepare_sequence_for_prediction(notes, vocab):
+    raise Exception("Update to match new representation")
+
     if len(notes) < SEQUENCE_LENGTH:
         print(
             f"File is to short. Min length: {SEQUENCE_LENGTH} sounds, provided: {len(notes)}."
@@ -186,6 +195,8 @@ def prepare_sequence_for_prediction(notes, vocab):
 
 
 def get_best_representation(vocab, pattern):
+    raise Exception("Update to match new representation")
+
     # assumption: all single notes are present in vocabulary
 
     if pattern in vocab.keys():
@@ -199,6 +210,8 @@ def get_best_representation(vocab, pattern):
 
 
 def save_midi_file(prediction_output):
+    raise Exception("Update to match new representation")
+
     offset = 0
     output_notes = []
 
