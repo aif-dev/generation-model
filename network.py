@@ -12,6 +12,7 @@ from keras.layers import (
     Reshape,
     Input,
     GaussianNoise,
+    Conv1D,
 )
 from keras.optimizers import RMSprop, Adam, SGD
 from keras.regularizers import l1_l2
@@ -20,6 +21,29 @@ from data_preparation import SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT
 
 
 def create_network(vocab_size, weights_filename=None):
+    # original (without recurrent_dropout for cudnn)
+    # val_loss ~=
+    #
+    model = Sequential()
+    model.add(
+        LSTM(
+            512,
+            input_shape=(SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT),
+            return_sequences=True,
+        )
+    )
+    model.add(LSTM(512, return_sequences=True))
+    model.add(LSTM(512))
+    model.add(BatchNorm())
+    model.add(Dropout(0.3))
+    model.add(Dense(256))
+    model.add(Activation("relu"))
+    model.add(BatchNorm())
+    model.add(Dropout(0.3))
+    model.add(Dense(vocab_size))
+    model.add(Activation("softmax"))
+    model.compile(loss="categorical_crossentropy", optimizer="rmsprop", metrics=["acc"])
+
     # our
     # val_loss ~= 1800
     #
@@ -96,21 +120,27 @@ def create_network(vocab_size, weights_filename=None):
     # custom
     # val_loss ~=
     #
-    model = Sequential()
-    model.add(
-        LSTM(
-            256,
-            input_shape=(SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT),
-            return_sequences=True,
-        )
-    )
-    model.add(GaussianNoise(0.075))
-    model.add(LSTM(256))
-    model.add(Dropout(0.3))
-    model.add(Dense(vocab_size))
-    model.add(Activation("softmax"))
-    optimizer = RMSprop(clipvalue=0.01)
-    model.compile(loss="categorical_crossentropy", optimizer=optimizer, metrics=["acc"])
+    # model = Sequential()
+    # model.add(
+    #     LSTM(
+    #         256,
+    #         input_shape=(SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT),
+    #         return_sequences=True,
+    #     )
+    # )
+    # model.add(GaussianNoise(0.075))
+    # model.add(
+    #     Conv1D(
+    #         filters=1024,
+    #         kernel_size=16,
+    #     )
+    # )
+    # model.add(LSTM(256))
+    # model.add(Dropout(0.3))
+    # model.add(Dense(vocab_size))
+    # model.add(Activation("softmax"))
+    # optimizer = RMSprop(clipvalue=0.01)
+    # model.compile(loss="categorical_crossentropy", optimizer=optimizer, metrics=["acc"])
 
     # https://www.tandfonline.com/doi/full/10.1080/25765299.2019.1649972
     # val_loss ~= 3.6
