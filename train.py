@@ -22,7 +22,7 @@ from data_preparation import (
 
 LOG_DIR = "logs/"
 BATCH_SIZE = 256
-DATASET_PERCENT = 1
+DATASET_PERCENT = 0.1
 
 
 def get_latest_checkpoint():
