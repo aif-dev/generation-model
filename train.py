@@ -21,7 +21,7 @@ from data_preparation import (
 
 
 LOG_DIR = "logs/"
-BATCH_SIZE = 256
+BATCH_SIZE = 32
 DATASET_PERCENT = 0.1
 
 
@@ -40,11 +40,9 @@ def get_latest_checkpoint():
 def train_network():
     notes = get_notes_from_dataset()
     notes = notes[: int(len(notes) * DATASET_PERCENT)]
-    vocab = create_vocabulary_for_training(notes)
-    vocab_size = len(vocab)
 
     training_sequence, validation_sequence = prepare_sequences_for_training(
-        notes, vocab, vocab_size, BATCH_SIZE
+        notes, BATCH_SIZE
     )
 
     latest_checkpoint = get_latest_checkpoint()
@@ -53,7 +51,7 @@ def train_network():
         print(f"*** Restoring from the lastest checkpoint: {latest_checkpoint} ***")
         model = load_model(latest_checkpoint)
     else:
-        model = create_network(vocab_size)
+        model = create_network()
 
     train(model, training_sequence, validation_sequence)
 
