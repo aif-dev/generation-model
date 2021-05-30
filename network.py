@@ -19,6 +19,7 @@ from keras.regularizers import l1_l2
 from keras.utils import plot_model
 from tensorflow.compat.v1.keras.layers import CuDNNLSTM
 from data_preparation import SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT, PREDICTION_SIZE
+from keras.backend import mean
 
 
 def Custom_Hamming_Loss(y_true, y_pred):
@@ -29,6 +30,29 @@ def create_network(weights_filename=None):
     # original (without recurrent_dropout for cudnn)
     # modified for matrix (88x1) representation of notes
     # val_loss ~=
+    #
+    # model = Sequential()
+    # model.add(
+    #     LSTM(
+    #         512,
+    #         # input_dim=PREDICTION_SIZE,
+    #         input_shape=(SEQUENCE_LENGTH, PREDICTION_SIZE),
+    #         return_sequences=True,
+    #     )
+    # )
+    # model.add(LSTM(512, return_sequences=True))
+    # model.add(LSTM(512))
+    # model.add(BatchNorm())
+    # model.add(Dropout(0.3))
+    # model.add(Dense(256))
+    # model.add(Activation("relu"))
+    # model.add(BatchNorm())
+    # model.add(Dropout(0.3))
+    # model.add(Dense(PREDICTION_SIZE))
+    # model.add(Activation("sigmoid"))
+    # model.compile(loss="binary_crossentropy", optimizer="rmsprop", metrics=["acc"])
+
+    # fixed
     #
     model = Sequential()
     model.add(
@@ -41,14 +65,15 @@ def create_network(weights_filename=None):
     model.add(LSTM(512, return_sequences=True))
     model.add(LSTM(512))
     model.add(BatchNorm())
+    model.add(Activation("relu"))
     model.add(Dropout(0.3))
     model.add(Dense(256))
-    model.add(Activation("relu"))
     model.add(BatchNorm())
+    model.add(Activation("relu"))
     model.add(Dropout(0.3))
     model.add(Dense(PREDICTION_SIZE))
     model.add(Activation("sigmoid"))
-    model.compile(loss=Custom_Hamming_Loss, optimizer="rmsprop", metrics=["acc"])
+    model.compile(loss="binary_crossentropy", optimizer="rmsprop", metrics=["acc"])
 
     # our
     # val_loss ~= 1800
