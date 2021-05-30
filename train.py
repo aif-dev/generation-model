@@ -21,7 +21,7 @@ from data_preparation import (
 
 
 LOG_DIR = "logs/"
-BATCH_SIZE = 32
+BATCH_SIZE = 128
 DATASET_PERCENT = 0.1
 
 
