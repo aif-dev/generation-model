@@ -16,19 +16,21 @@ from keras.layers import (
 )
 from keras.optimizers import RMSprop, Adam, SGD
 from keras.regularizers import l1_l2
+from keras.utils import plot_model
 from tensorflow.compat.v1.keras.layers import CuDNNLSTM
-from data_preparation import SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT
+from data_preparation import SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT, PREDICTION_SIZE
 
 
-def create_network(vocab_size, weights_filename=None):
+def create_network(weights_filename=None):
     # original (without recurrent_dropout for cudnn)
+    # modified for matrix (88x1) representation of notes
     # val_loss ~=
     #
     model = Sequential()
     model.add(
         LSTM(
             512,
-            input_shape=(SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT),
+            input_shape=(SEQUENCE_LENGTH, PREDICTION_SIZE),
             return_sequences=True,
         )
     )
@@ -40,9 +42,9 @@ def create_network(vocab_size, weights_filename=None):
     model.add(Activation("relu"))
     model.add(BatchNorm())
     model.add(Dropout(0.3))
-    model.add(Dense(vocab_size))
-    model.add(Activation("softmax"))
-    model.compile(loss="categorical_crossentropy", optimizer="rmsprop", metrics=["acc"])
+    model.add(Dense(PREDICTION_SIZE))
+    model.add(Activation("sigmoid"))
+    model.compile(loss="binary_crossentropy", optimizer="rmsprop", metrics=["acc"])
 
     # our
     # val_loss ~= 1800
@@ -339,6 +341,7 @@ def create_network(vocab_size, weights_filename=None):
         print(f"*** Loading weights from {weights_filename} ***")
         model.load_weights(weights_filename)
 
-    print(model.summary())
+    model.summary()
+    plot_model(model, to_file="model.png", show_shapes=True, show_layer_names=True)
 
     return model
