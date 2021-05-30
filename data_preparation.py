@@ -93,11 +93,15 @@ def get_notes_from_file(file):
         if isinstance(element, note.Note):
             midi_pitch = element.pitch.midi
             multi_label_pattern[midi_pitch - 21] = 1
+            multi_label_pattern.astype(np.int8)
             notes.append(multi_label_pattern)
+
         elif isinstance(element, chord.Chord):
             for pitch in element.pitches:
                 midi_pitch = pitch.midi
                 multi_label_pattern[midi_pitch - 21] = 1
+
+            multi_label_pattern.astype(np.int8)
             notes.append(multi_label_pattern)
 
     return notes
