@@ -22,6 +22,7 @@ HASH_FILENAME = "dataset_hash"
 RESULTS_DIR = "results"
 SEQUENCE_LENGTH = 60
 VALIDATION_SPLIT = 0.2
+PREDICTION_SIZE = 88
 
 """
 changing this value requires refactoring
@@ -87,17 +88,17 @@ def get_notes_from_file(file):
         notes_to_parse = midi.flat.notes
 
     for element in notes_to_parse:
-        pattern = np.zeros(88)
+        multi_label_pattern = np.zeros(PREDICTION_SIZE)
 
         if isinstance(element, note.Note):
             midi_pitch = element.pitch.midi
-            pattern[midi_pitch - 21] = 1
-            notes.append(pattern)
+            multi_label_pattern[midi_pitch - 21] = 1
+            notes.append(multi_label_pattern)
         elif isinstance(element, chord.Chord):
             for pitch in element.pitches:
                 midi_pitch = pitch.midi
-                pattern[midi_pitch - 21] = 1
-            notes.append(pattern)
+                multi_label_pattern[midi_pitch - 21] = 1
+            notes.append(multi_label_pattern)
 
     return notes
 
@@ -163,17 +164,13 @@ def load_vocabulary_from_training():
 def prepare_sequences_for_training(notes, batch_size):
     training_split = 1 - VALIDATION_SPLIT
     dataset_split = math.ceil(training_split * len(notes))
+
     training_sequence = NotesSequence(
-        notes[:dataset_split],
-        batch_size,
-        SEQUENCE_LENGTH,
-        NUM_NOTES_TO_PREDICT,
+        notes[:dataset_split], batch_size, SEQUENCE_LENGTH, PREDICTION_SIZE
     )
+
     validation_sequence = NotesSequence(
-        notes[dataset_split:],
-        batch_size,
-        SEQUENCE_LENGTH,
-        NUM_NOTES_TO_PREDICT,
+        notes[dataset_split:], batch_size, SEQUENCE_LENGTH, PREDICTION_SIZE
     )
 
     return training_sequence, validation_sequence
