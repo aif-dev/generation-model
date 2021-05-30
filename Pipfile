@@ -19,6 +19,7 @@ random-word = "*"
 pandas = "*"
 matplotlib = "*"
 statsmodels = "*"
+pydot = "*"
 
 [requires]
 python_version = "3.8"
