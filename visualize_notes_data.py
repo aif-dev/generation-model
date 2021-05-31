@@ -2,7 +2,7 @@ import os
 from collections import Counter
 import matplotlib.pyplot as plt
 import pandas as pd
-from math import log, ceil
+from math import sqrt, ceil
 from statsmodels.graphics.gofplots import qqplot
 from data_preparation import get_notes_from_dataset
 from train import DATASET_PERCENT
@@ -12,7 +12,7 @@ print("Loading data...")
 notes = get_notes_from_dataset()
 
 print("Mapping data...")
-notes = [hash(tuple(note)) for note in notes[: int(len(notes) * DATASET_PERCENT)]]
+notes = [hash(tuple(note)) for note in notes[: int(len(notes))]]  # * DATASET_PERCENT
 
 print("Counting occurances...")
 notes_counter = Counter(notes)
@@ -31,7 +31,7 @@ for i in range(half_len):
         occurances[i] = least_common[2 * i][1]
         occurances[-i - 1] = least_common[2 * i + 1][1]
 
-log_occurances = [log(occurance, 2) for occurance in occurances]
+sqrt_occurances = [sqrt(occurance) for occurance in occurances]
 
 print("Plotting...")
 fig, axes = plt.subplots(2, 1)
@@ -39,8 +39,8 @@ fig.canvas.manager.set_window_title("Maestro")
 fig.suptitle("MIDI chords/single notes from the Maestro dataset")
 
 axes[0].set_title("Chords/single notes encoded as 88x1 matrices")
-axes[0].bar([i for i in range(len(occurances))], log_occurances)
-axes[0].set_ylabel("log(occurances, 2)")
+axes[0].bar([i for i in range(len(occurances))], sqrt_occurances)
+axes[0].set_ylabel("sqrt(occurances)")
 axes[0].set_xlabel("matrix index")
 axes[0].set_xlim([0, len(notes_counter)])
 
