@@ -21,7 +21,7 @@ HASH_FILENAME = "dataset_hash"
 RESULTS_DIR = "results"
 SEQUENCE_LENGTH = 60
 VALIDATION_SPLIT = 0.2
-PREDICTION_SIZE = 88
+NOTE_MATRIX_SIZE = 88
 
 """
 changing this value requires refactoring
@@ -87,7 +87,7 @@ def get_notes_from_file(file):
         notes_to_parse = midi.flat.notes
 
     for element in notes_to_parse:
-        multi_label_pattern = np.zeros(PREDICTION_SIZE)
+        multi_label_pattern = np.zeros(NOTE_MATRIX_SIZE)
 
         if isinstance(element, note.Note):
             midi_pitch = element.pitch.midi
@@ -141,11 +141,11 @@ def prepare_sequences_for_training(notes, batch_size):
     dataset_split = math.ceil(training_split * len(notes))
 
     training_sequence = NotesSequence(
-        notes[:dataset_split], batch_size, SEQUENCE_LENGTH, PREDICTION_SIZE
+        notes[:dataset_split], batch_size, SEQUENCE_LENGTH, NOTE_MATRIX_SIZE
     )
 
     validation_sequence = NotesSequence(
-        notes[dataset_split:], batch_size, SEQUENCE_LENGTH, PREDICTION_SIZE
+        notes[dataset_split:], batch_size, SEQUENCE_LENGTH, NOTE_MATRIX_SIZE
     )
 
     return training_sequence, validation_sequence

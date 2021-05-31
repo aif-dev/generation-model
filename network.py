@@ -22,7 +22,7 @@ from keras.initializers import Constant
 from tensorflow.keras.metrics import top_k_categorical_accuracy
 from tensorflow.compat.v1.keras.layers import CuDNNLSTM
 from tensorflow_addons.losses import SigmoidFocalCrossEntropy
-from data_preparation import SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT, PREDICTION_SIZE
+from data_preparation import SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT, NOTE_MATRIX_SIZE
 from keras.backend import mean, binary_crossentropy
 
 
@@ -101,7 +101,7 @@ def create_network(weights_filename=None):
     model.add(
         LSTM(
             256,
-            input_shape=(SEQUENCE_LENGTH, PREDICTION_SIZE),
+            input_shape=(SEQUENCE_LENGTH, NOTE_MATRIX_SIZE),
             return_sequences=True,
         )
     )
@@ -115,7 +115,7 @@ def create_network(weights_filename=None):
 
     p = 0.01
     initial_bias = -math.log((1 - p) / p)
-    model.add(Dense(PREDICTION_SIZE, bias_initializer=Constant(initial_bias)))
+    model.add(Dense(NOTE_MATRIX_SIZE, bias_initializer=Constant(initial_bias)))
 
     model.add(Activation("sigmoid"))
 
