@@ -1,7 +1,6 @@
 import os
 import sys
 import getopt
-import pickle
 import tensorflow as tf
 import numpy as np
 from network import create_network
@@ -36,28 +35,25 @@ def get_best_weights_filename():
     return best_checkpoint
 
 
-def generate_notes(model, network_input, vocab, vocab_size):
-    raise Exception("Update to match new matrix representation")
+def generate_notes(model, network_input):
 
-    inverted_vocab = {i: note for note, i in vocab.items()}
-    sequence_in = [note_idx / float(vocab_size) for note_idx in network_input]
+
     prediction_output = []
-
+    
     for _ in range(NUM_NOTES_TO_GENERATE):
+        
         prediction_input = np.reshape(
-            sequence_in, (1, SEQUENCE_LENGTH, NOTE_MATRIX_SIZE)
+            network_input, (1, SEQUENCE_LENGTH, NOTE_MATRIX_SIZE)
         )
+        
+        prediction = model.predict(prediction_input, verbose=0)[-1]
+        prediction = np.round(prediction)
+        network_input.append(prediction)
+        prediction_output.append(prediction)
 
-        prediction = model.predict(prediction_input, verbose=0)
-        best_note_idx = np.argmax(prediction)
-        best_note = inverted_vocab[best_note_idx]
-        prediction_output.append(best_note)
-
-        normalized_best_note_idx = best_note_idx / float(vocab_size)
-        sequence_in.append(normalized_best_note_idx)
 
         # store only last 'SEQUENCE_LENGTH' elements for next prediction
-        sequence_in = sequence_in[
+        network_input = network_input[
             NUM_NOTES_TO_PREDICT : SEQUENCE_LENGTH + NUM_NOTES_TO_PREDICT
         ]
 
@@ -65,15 +61,12 @@ def generate_notes(model, network_input, vocab, vocab_size):
 
 
 def generate_music(file):
-    raise Exception("Update to match new matrix representation")
 
     notes = get_notes_from_file(file)
-    vocab = load_vocabulary_from_training()
-    vocab_size = len(vocab)
-
-    network_input = prepare_sequence_for_prediction(notes, vocab)
-    model = create_network(vocab_size, get_best_weights_filename())
-    prediction_output = generate_notes(model, network_input, vocab, vocab_size)
+    network_input = prepare_sequence_for_prediction(notes)
+    
+    model = create_network(get_best_weights_filename())
+    prediction_output = generate_notes(model, network_input)
     save_midi_file(prediction_output)
 
 
