@@ -17,7 +17,6 @@ CHECKPOINTS_DIR = "checkpoints"
 MIDI_SONGS_DIR = "midi_songs"
 TRAINING_DATA_DIR = "training_data"
 NOTES_FILENAME = "notes"
-VOCABULARY_FILENAME = "vocabulary"
 HASH_FILENAME = "dataset_hash"
 RESULTS_DIR = "results"
 SEQUENCE_LENGTH = 60
@@ -135,34 +134,6 @@ def get_notes_from_dataset():
             notes = pickle.load(notes_data_file)
 
     return notes
-
-
-def create_vocabulary_for_training(notes):
-    raise Exception("Vocabulary is not needed")
-
-    print("*** Creating new vocabulary ***")
-
-    # these are either notes or chords
-    sound_names = sorted(set(item for item in notes))
-    vocab = dict((note, number) for number, note in enumerate(sound_names))
-
-    vocab_path = os.path.join(TRAINING_DATA_DIR, VOCABULARY_FILENAME)
-    with open(vocab_path, "wb") as vocab_data_file:
-        pickle.dump(vocab, vocab_data_file)
-
-    print(f"*** vocabulary size: {len(vocab)} ***")
-
-    return vocab
-
-
-def load_vocabulary_from_training():
-    raise Exception("Vocabulary is not needed")
-
-    print("*** Restoring vocabulary used for training ***")
-
-    vocab_path = os.path.join(TRAINING_DATA_DIR, VOCABULARY_FILENAME)
-    with open(vocab_path, "rb") as vocab_data_file:
-        return pickle.load(vocab_data_file)
 
 
 def prepare_sequences_for_training(notes, batch_size):

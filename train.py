@@ -14,7 +14,6 @@ from network import create_network
 from data_preparation import (
     get_notes_from_dataset,
     prepare_sequences_for_training,
-    create_vocabulary_for_training,
     clear_training_data,
     clear_checkpoints,
 )

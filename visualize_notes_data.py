@@ -2,10 +2,9 @@ import os
 from collections import Counter
 import matplotlib.pyplot as plt
 import pandas as pd
-from math import log, ceil, floor, sqrt
+from math import log, ceil
 from statsmodels.graphics.gofplots import qqplot
-from scipy.stats import norm
-from data_preparation import get_notes_from_dataset, create_vocabulary_for_training
+from data_preparation import get_notes_from_dataset
 from train import DATASET_PERCENT
 
 

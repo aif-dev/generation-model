@@ -8,7 +8,6 @@ from network import create_network
 from data_preparation import (
     save_midi_file,
     prepare_sequence_for_prediction,
-    load_vocabulary_from_training,
     get_notes_from_file,
 )
 from data_preparation import SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT
