@@ -1,5 +1,5 @@
 import math
-from keras.utils import Sequence, np_utils
+from keras.utils import Sequence
 import numpy as np
 
 
@@ -29,9 +29,10 @@ class NotesSequence(Sequence):
             network_output.append(note_out)
 
         n_patterns = len(network_input)
+        network_output = np.array(network_output)
 
         network_input = np.reshape(
             network_input, (n_patterns, self.sequence_length, self.prediction_size)
         )
 
-        return np.array(network_input), np.array(network_output)
+        return network_input, network_output
