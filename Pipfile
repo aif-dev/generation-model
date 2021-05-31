@@ -22,6 +22,8 @@ statsmodels = "*"
 pydot = "*"
 scipy = "*"
 tensorboard = "*"
+tensorflow-addons = "*"
+sklearn = "*"
 
 [requires]
 python_version = "3.8"

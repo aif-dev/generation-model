@@ -1,3 +1,4 @@
+import math
 from keras.models import Sequential
 from keras.layers import (
     Dense,
@@ -17,13 +18,32 @@ from keras.layers import (
 from keras.optimizers import RMSprop, Adam, SGD
 from keras.regularizers import l1_l2
 from keras.utils import plot_model
+from keras.initializers import Constant
+from tensorflow.keras.metrics import top_k_categorical_accuracy
 from tensorflow.compat.v1.keras.layers import CuDNNLSTM
+from tensorflow_addons.losses import SigmoidFocalCrossEntropy
 from data_preparation import SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT, PREDICTION_SIZE
-from keras.backend import mean
+from keras.backend import mean, binary_crossentropy
 
 
-def Custom_Hamming_Loss(y_true, y_pred):
+def hamming(y_true, y_pred):
     return mean(y_true * (1 - y_pred) + (1 - y_true) * y_pred)
+
+
+def top_labels(true_label, pred_label):
+    return top_k_categorical_accuracy(true_label, pred_label, k=88)
+
+
+def get_weighted_binary_loss(weights):
+    def weighted_loss(y_true, y_pred):
+        return K.mean(
+            (weights[:, 0] ** (1 - y_true))
+            * (weights[:, 1] ** (y_true))
+            * binary_crossentropy(y_true, y_pred),
+            axis=-1,
+        )
+
+    return weighted_loss
 
 
 def create_network(weights_filename=None):
@@ -54,26 +74,53 @@ def create_network(weights_filename=None):
 
     # fixed
     #
+    # model = Sequential()
+    # model.add(
+    #     LSTM(
+    #         512,
+    #         input_shape=(SEQUENCE_LENGTH, PREDICTION_SIZE),
+    #         return_sequences=True,
+    #     )
+    # )
+    # model.add(LSTM(512, return_sequences=True))
+    # model.add(LSTM(512))
+    # model.add(BatchNorm())
+    # model.add(Activation("relu"))
+    # model.add(Dropout(0.3))
+    # model.add(Dense(256))
+    # model.add(BatchNorm())
+    # model.add(Activation("relu"))
+    # model.add(Dropout(0.3))
+    # model.add(Dense(PREDICTION_SIZE))
+    # model.add(Activation("sigmoid"))
+    # model.compile(loss="binary_crossentropy", optimizer="rmsprop", metrics=["acc"])
+
+    # custom
+    #
     model = Sequential()
     model.add(
         LSTM(
-            512,
+            256,
             input_shape=(SEQUENCE_LENGTH, PREDICTION_SIZE),
             return_sequences=True,
         )
     )
-    model.add(LSTM(512, return_sequences=True))
-    model.add(LSTM(512))
+    model.add(GaussianNoise(0.075))
+    model.add(LSTM(256, return_sequences=True))
+    model.add(GaussianNoise(0.075))
+    model.add(LSTM(256))
     model.add(BatchNorm())
     model.add(Activation("relu"))
     model.add(Dropout(0.3))
-    model.add(Dense(256))
-    model.add(BatchNorm())
-    model.add(Activation("relu"))
-    model.add(Dropout(0.3))
-    model.add(Dense(PREDICTION_SIZE))
+
+    p = 0.01
+    initial_bias = -math.log((1 - p) / p)
+    model.add(Dense(PREDICTION_SIZE, bias_initializer=Constant(initial_bias)))
+
     model.add(Activation("sigmoid"))
-    model.compile(loss="binary_crossentropy", optimizer="rmsprop", metrics=["acc"])
+
+    loss = SigmoidFocalCrossEntropy(alpha=1, gamma=8.0)
+    model.compile(loss=loss, optimizer="rmsprop", metrics=[hamming, "acc"])
 
     # our
     # val_loss ~= 1800
