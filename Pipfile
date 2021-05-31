@@ -20,6 +20,8 @@ pandas = "*"
 matplotlib = "*"
 statsmodels = "*"
 pydot = "*"
+scipy = "*"
+tensorboard = "*"
 
 [requires]
 python_version = "3.8"
