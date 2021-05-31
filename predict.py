@@ -37,6 +37,8 @@ def get_best_weights_filename():
 
 
 def generate_notes(model, network_input, vocab, vocab_size):
+    raise Exception("Update to match new matrix representation")
+
     inverted_vocab = {i: note for note, i in vocab.items()}
     sequence_in = [note_idx / float(vocab_size) for note_idx in network_input]
     prediction_output = []
