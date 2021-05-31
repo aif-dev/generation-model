@@ -12,7 +12,7 @@ print("Loading data...")
 notes = get_notes_from_dataset()
 
 print("Mapping data...")
-notes = [hash(tuple(note)) for note in notes[: int(len(notes))]]  # * DATASET_PERCENT
+notes = [hash(tuple(note)) for note in notes[: int(len(notes) * DATASET_PERCENT)]]
 
 print("Counting occurances...")
 notes_counter = Counter(notes)
