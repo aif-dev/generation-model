@@ -10,7 +10,7 @@ from data_preparation import (
     prepare_sequence_for_prediction,
     get_notes_from_file,
 )
-from data_preparation import SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT
+from data_preparation import SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT, NOTE_MATRIX_SIZE
 
 
 NUM_NOTES_TO_GENERATE = 300
@@ -45,7 +45,7 @@ def generate_notes(model, network_input, vocab, vocab_size):
 
     for _ in range(NUM_NOTES_TO_GENERATE):
         prediction_input = np.reshape(
-            sequence_in, (1, SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT)
+            sequence_in, (1, SEQUENCE_LENGTH, NOTE_MATRIX_SIZE)
         )
 
         prediction = model.predict(prediction_input, verbose=0)
