@@ -36,11 +36,9 @@ def get_best_weights_filename():
 
 
 def generate_notes(model, network_input):
-
     prediction_output = []
 
     for _ in range(NUM_NOTES_TO_GENERATE):
-
         prediction_input = np.reshape(
             network_input, (1, SEQUENCE_LENGTH, NOTE_MATRIX_SIZE)
         )
@@ -59,10 +57,8 @@ def generate_notes(model, network_input):
 
 
 def generate_music(file):
-
     notes = get_notes_from_file(file)
     network_input = prepare_sequence_for_prediction(notes)
-
     model = create_network(get_best_weights_filename())
     prediction_output = generate_notes(model, network_input)
     save_midi_file(prediction_output)

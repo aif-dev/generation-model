@@ -36,7 +36,6 @@ def get_weighted_binary_loss(weights):
 
 
 def create_network(weights_filename=None):
-
     model = Sequential()
     model.add(
         LSTM(
@@ -58,7 +57,6 @@ def create_network(weights_filename=None):
     model.add(Dense(NOTE_MATRIX_SIZE, bias_initializer=Constant(initial_bias)))
 
     model.add(Activation("sigmoid"))
-
     loss = SigmoidFocalCrossEntropy(alpha=1, gamma=8.0)
     model.compile(loss=loss, optimizer="rmsprop", metrics=[hamming, "acc"])
 
