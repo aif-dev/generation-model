@@ -30,12 +30,19 @@ def create_network(weights_filename=None):
     model.add(Activation("relu"))
     model.add(Dropout(0.3))
 
+    # initally, positive samples will be extremely incorrect therefore
+    # they will receive high weights
     p = 0.1
     initial_bias = -math.log((1 - p) / p)
     model.add(Dense(NOTE_MATRIX_SIZE, bias_initializer=Constant(initial_bias)))
 
     model.add(Activation("sigmoid"))
-    loss = SigmoidFocalCrossEntropy(alpha=0.25, gamma=2.0)
+    # alpha - controls balance between positive and negative labeled samples
+    #         alpha for positive and 1-alpha for negative
+    #         positive examples are usually minorities
+    # gamma - controls how much attention goes to misclassified examples
+    #         less loss will be propagated from easy examples
+    loss = SigmoidFocalCrossEntropy(alpha=0.05, gamma=2.0)
     model.compile(loss=loss, optimizer="rmsprop", metrics=["acc"])
 
     if weights_filename:
