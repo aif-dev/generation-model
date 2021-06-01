@@ -19,22 +19,6 @@ def hamming(y_true, y_pred):
     return mean(y_true * (1 - y_pred) + (1 - y_true) * y_pred)
 
 
-def top_labels(true_label, pred_label):
-    return top_k_categorical_accuracy(true_label, pred_label, k=88)
-
-
-def get_weighted_binary_loss(weights):
-    def weighted_loss(y_true, y_pred):
-        return K.mean(
-            (weights[:, 0] ** (1 - y_true))
-            * (weights[:, 1] ** (y_true))
-            * binary_crossentropy(y_true, y_pred),
-            axis=-1,
-        )
-
-    return weighted_loss
-
-
 def create_network(weights_filename=None):
     model = Sequential()
     model.add(
