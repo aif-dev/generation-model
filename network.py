@@ -9,10 +9,9 @@ from keras.layers import (
     GaussianNoise,
 )
 from keras.initializers import Constant
-from tensorflow.keras.metrics import top_k_categorical_accuracy
 from tensorflow_addons.losses import SigmoidFocalCrossEntropy
 from data_preparation import SEQUENCE_LENGTH, NOTE_MATRIX_SIZE
-from keras.backend import mean, binary_crossentropy
+from keras.backend import mean
 
 
 def hamming(y_true, y_pred):
@@ -23,15 +22,15 @@ def create_network(weights_filename=None):
     model = Sequential()
     model.add(
         LSTM(
-            256,
+            128,
             input_shape=(SEQUENCE_LENGTH, NOTE_MATRIX_SIZE),
             return_sequences=True,
         )
     )
     model.add(GaussianNoise(0.075))
-    model.add(LSTM(256, return_sequences=True))
+    model.add(LSTM(128, return_sequences=True))
     model.add(GaussianNoise(0.075))
-    model.add(LSTM(256))
+    model.add(LSTM(128))
     model.add(BatchNorm())
     model.add(Activation("relu"))
     model.add(Dropout(0.3))
