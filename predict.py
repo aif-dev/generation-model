@@ -74,21 +74,6 @@ def generate_music(file):
     save_midi_file(prediction_output)
 
 
-<<<<<<< HEAD
-def generate_music_from_file(filename):
-    notes = get_notes_from_file(filename)
-    # Get all pitch names
-    pitchnames = sorted(set(item for item in notes))
-    # Get all pitch names
-    n_vocab = len(set(notes))
-
-    network_input, normalized_input = prepare_sequences_for_prediction(
-        notes, pitchnames, n_vocab
-    )
-    model = create_network(normalized_input, n_vocab, get_best_weights_filename())
-    prediction_output = generate_notes(model, network_input, pitchnames, n_vocab)
-    save_midi_file(prediction_output)
-=======
 def parse_cli_args():
     usage_str = f"Usage: {sys.argv[0]} [-h] -f <seed_midi_file>"
 
@@ -114,7 +99,6 @@ def parse_cli_args():
         sys.exit(2)
 
     return file
->>>>>>> master
 
 
 if __name__ == "__main__":
