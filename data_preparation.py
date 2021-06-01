@@ -158,8 +158,7 @@ def prepare_sequence_for_prediction(notes):
         )
         sys.exit(1)
 
-    sequence_in = notes[:SEQUENCE_LENGTH]
-    network_input = notes[SEQUENCE_LENGTH]
+    network_input = notes[:SEQUENCE_LENGTH]
 
     return network_input
 
