@@ -27,7 +27,7 @@ def create_network(vocab_size, weights_filename=None):
     model.add(Dropout(0.3))
     model.add(Dense(vocab_size))
     model.add(Activation("softmax"))
-    model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=['acc'])
+    model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["acc"])
 
     if weights_filename:
         print(f"*** Loading weights from {weights_filename} ***")
