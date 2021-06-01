@@ -11,11 +11,6 @@ from keras.layers import (
 from keras.initializers import Constant
 from tensorflow_addons.losses import SigmoidFocalCrossEntropy
 from data_preparation import SEQUENCE_LENGTH, NOTE_MATRIX_SIZE
-from keras.backend import mean
-
-
-def hamming(y_true, y_pred):
-    return mean(y_true * (1 - y_pred) + (1 - y_true) * y_pred)
 
 
 def create_network(weights_filename=None):
@@ -35,13 +30,13 @@ def create_network(weights_filename=None):
     model.add(Activation("relu"))
     model.add(Dropout(0.3))
 
-    p = 0.01
+    p = 0.1
     initial_bias = -math.log((1 - p) / p)
     model.add(Dense(NOTE_MATRIX_SIZE, bias_initializer=Constant(initial_bias)))
 
     model.add(Activation("sigmoid"))
-    loss = SigmoidFocalCrossEntropy(alpha=1, gamma=8.0)
-    model.compile(loss=loss, optimizer="rmsprop", metrics=[hamming, "acc"])
+    loss = SigmoidFocalCrossEntropy(alpha=0.25, gamma=2.0)
+    model.compile(loss=loss, optimizer="rmsprop", metrics=["acc"])
 
     if weights_filename:
         print(f"*** Loading weights from {weights_filename} ***")
