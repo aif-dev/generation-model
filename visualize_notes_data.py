@@ -1,8 +1,10 @@
 import os
-from collections import Counter
 import matplotlib.pyplot as plt
 import pandas as pd
-from math import ceil, sqrt
+import numpy as np
+from collections import Counter
+from math import ceil, sqrt, log
+from scipy.stats import norm
 from statsmodels.graphics.gofplots import qqplot
 from data_preparation import get_notes_from_dataset, create_vocabulary_for_training
 from train import DATASET_PERCENT
@@ -21,6 +23,9 @@ mapped_notes = [vocab[note] for note in notes]
 print("Counting occurances...")
 notes_counter = Counter(mapped_notes)
 
+for key in notes_counter:
+    notes_counter[key] = 1 / sqrt(notes_counter[key])
+
 print("Rearranging occurances...")
 counter_size = len(notes_counter)
 least_common = notes_counter.most_common(counter_size)
@@ -35,7 +40,8 @@ for i in range(half_len):
         occurances[i] = least_common[2 * i][1]
         occurances[-i - 1] = least_common[2 * i + 1][1]
 
-sqrt_occurances = [sqrt(occurance) for occurance in occurances]
+# sqrt_occurances = [sqrt(occurance) for occurance in occurances]
+sqrt_occurances = [occurance for occurance in occurances]
 
 print("Plotting...")
 fig, axes = plt.subplots(2, 1)

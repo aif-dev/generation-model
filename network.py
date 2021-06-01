@@ -24,25 +24,29 @@ def create_network(vocab_size, weights_filename=None):
     # original (without recurrent_dropout for cudnn)
     # val_loss ~=
     #
+    lstm_units = 512
     model = Sequential()
     model.add(
         LSTM(
-            512,
+            lstm_units,
             input_shape=(SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT),
             return_sequences=True,
         )
     )
-    model.add(LSTM(512, return_sequences=True))
-    model.add(LSTM(512))
+    model.add(GaussianNoise(0.075))
+    model.add(LSTM(lstm_units, return_sequences=True))
+    model.add(GaussianNoise(0.075))
+    model.add(LSTM(lstm_units))
     model.add(BatchNorm())
+    model.add(Activation("relu"))
     model.add(Dropout(0.3))
     model.add(Dense(256))
-    model.add(Activation("relu"))
     model.add(BatchNorm())
+    model.add(Activation("relu"))
     model.add(Dropout(0.3))
     model.add(Dense(vocab_size))
     model.add(Activation("softmax"))
-    model.compile(loss="categorical_crossentropy", optimizer="rmsprop", metrics=["acc"])
+    model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["acc"])
 
     # our
     # val_loss ~= 1800

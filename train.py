@@ -2,6 +2,7 @@ import os
 import datetime
 import getopt
 import sys
+import math
 import tensorflow as tf
 from keras.models import load_model
 from keras.callbacks import (
@@ -17,12 +18,13 @@ from data_preparation import (
     create_vocabulary_for_training,
     clear_training_data,
     clear_checkpoints,
+    get_class_weights,
 )
 
 
 LOG_DIR = "logs/"
-BATCH_SIZE = 256
-DATASET_PERCENT = 0.1
+BATCH_SIZE = 32
+DATASET_PERCENT = 1
 
 
 def get_latest_checkpoint():
@@ -55,10 +57,12 @@ def train_network():
     else:
         model = create_network(vocab_size)
 
-    train(model, training_sequence, validation_sequence)
+    class_weights = get_class_weights(notes, vocab)
+
+    train(model, training_sequence, validation_sequence, class_weights)
 
 
-def train(model, training_sequence, validation_sequence):
+def train(model, training_sequence, validation_sequence, class_weights):
     filepath = "checkpoints/weights-improvement-{epoch:02d}-{loss:.4f}-bigger.hdf5"
     model_checkpoint = ModelCheckpoint(
         filepath, monitor="loss", verbose=0, save_best_only=True, mode="min"
@@ -75,7 +79,7 @@ def train(model, training_sequence, validation_sequence):
 
     callbacks_list = [
         model_checkpoint,
-        early_stopping,
+        # early_stopping,
         tensorboard,
         reduce_lr_on_pleateau,
     ]
@@ -86,6 +90,7 @@ def train(model, training_sequence, validation_sequence):
         epochs=200,
         callbacks=callbacks_list,
         shuffle=True,
+        # class_weight=class_weights,
     )
 
 

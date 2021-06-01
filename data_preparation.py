@@ -5,8 +5,10 @@ import pickle
 import math
 import datetime
 import shutil
-from multiprocessing import Pool, cpu_count
 import checksumdir
+import numpy as np
+from multiprocessing import Pool, cpu_count
+from collections import Counter
 from music21 import converter, instrument, stream, note, chord
 from random_word import RandomWords
 from notes_sequence import NotesSequence
@@ -183,6 +185,16 @@ def prepare_sequence_for_prediction(notes, vocab):
     network_input = [get_best_representation(vocab, sound) for sound in sequence_in]
 
     return network_input
+
+
+def get_class_weights(notes, vocab):
+    mapped_notes = [vocab[note] for note in notes]
+    notes_counter = Counter(mapped_notes)
+
+    for key in notes_counter:
+        notes_counter[key] = 1 / math.sqrt(notes_counter[key])
+
+    return notes_counter
 
 
 def get_best_representation(vocab, pattern):
