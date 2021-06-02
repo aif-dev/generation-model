@@ -26,14 +26,15 @@ def create_network(weights_filename=None):
     model.add(LSTM(128, return_sequences=True))
     model.add(GaussianNoise(0.075))
     model.add(LSTM(128))
-    model.add(BatchNorm())
+    # model.add(BatchNorm())
     model.add(Activation("relu"))
     model.add(Dropout(0.3))
 
     # initally, positive samples will be extremely incorrect therefore
     # they will receive high weights
-    p = 0.1
+    p = 0.01
     initial_bias = -math.log((1 - p) / p)
+    initial_bias = -0.5
     model.add(Dense(NOTE_MATRIX_SIZE, bias_initializer=Constant(initial_bias)))
 
     model.add(Activation("sigmoid"))
@@ -42,8 +43,8 @@ def create_network(weights_filename=None):
     #         positive examples are usually minorities
     # gamma - controls how much attention goes to misclassified examples
     #         less loss will be propagated from easy examples
-    loss = SigmoidFocalCrossEntropy(alpha=0.05, gamma=2.0)
-    model.compile(loss=loss, optimizer="rmsprop", metrics=["acc"])
+    loss = SigmoidFocalCrossEntropy(alpha=0.90, gamma=2.0)
+    model.compile(loss=loss, optimizer="adagrad", metrics=["acc"])
 
     if weights_filename:
         print(f"*** Loading weights from {weights_filename} ***")

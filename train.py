@@ -72,7 +72,7 @@ def train(model, training_sequence, validation_sequence):
 
     callbacks_list = [
         model_checkpoint,
-        early_stopping,
+        # early_stopping,
         tensorboard,
         reduce_lr_on_pleateau,
     ]
