@@ -1,19 +1,39 @@
 import glob
 import os
 import sys
-import datetime
 import pickle
+import math
+import datetime
+import shutil
 from multiprocessing import Pool, cpu_count
 import checksumdir
-import numpy as np
 from music21 import converter, instrument, stream, note, chord
-from keras.utils import np_utils
+from random_word import RandomWords
+from notes_sequence import NotesSequence
 
+
+CHECKPOINTS_DIR = "checkpoints"
 MIDI_SONGS_DIR = "midi_songs"
 DATA_DIR = "data"
 NOTES_FILENAME = "notes"
+VOCABULARY_FILENAME = "vocabulary"
 HASH_FILENAME = "dataset_hash"
 RESULTS_DIR = "results"
+SEQUENCE_LENGTH = 100
+VALIDATION_SPLIT = 0.2
+
+"""
+changing this value requires refactoring
+
+predict.py -> loop inside generate_notes() [getting prediction]
+data_preparation.py -> loop inside prepare_sequences_for_training() [out sequences]
+"""
+NUM_NOTES_TO_PREDICT = 1
+
+
+def clean_data_and_checkpoints():
+    shutil.rmtree(DATA_DIR)
+    shutil.rmtree(CHECKPOINTS_DIR)
 
 
 def save_data_hash(hash_value):
@@ -44,11 +64,10 @@ def is_data_changed():
 
 
 def get_notes_from_file(file):
-    notes = []
-    midi = converter.parse(file)
-
     print(f"Parsing {file}")
 
+    midi = converter.parse(file)
+    notes = []
     try:
         # file has instrument parts
         instrument_stream = instrument.partitionByInstrument(midi)
@@ -59,7 +78,7 @@ def get_notes_from_file(file):
 
     for element in notes_to_parse:
         if isinstance(element, note.Note):
-            notes.append(str(element.pitch))
+            notes.append(element.name)
         elif isinstance(element, chord.Chord):
             notes.append(".".join(str(n) for n in element.normalOrder))
 
@@ -67,8 +86,6 @@ def get_notes_from_file(file):
 
 
 def get_notes_from_dataset():
-    """Get all the notes and chords from the midi files in the ./midi_songs directory"""
-
     notes_path = os.path.join(DATA_DIR, NOTES_FILENAME)
     notes = []
     if is_data_changed():
@@ -78,9 +95,9 @@ def get_notes_from_dataset():
                     get_notes_from_file, glob.glob(f"{MIDI_SONGS_DIR}/*.mid")
                 )
 
-                for notes_from_file in notes_from_files:
-                    for note in notes_from_file:
-                        notes.append(note)
+            for notes_from_file in notes_from_files:
+                for note in notes_from_file:
+                    notes.append(note)
 
             with open(notes_path, "wb") as notes_data_file:
                 pickle.dump(notes, notes_data_file)
@@ -98,65 +115,77 @@ def get_notes_from_dataset():
     return notes
 
 
-def prepare_sequences_for_training(notes, n_vocab):
-    """Prepare the sequences used by the Neural Network"""
-    sequence_length = 100
+def create_vocabulary_for_training(notes):
+    print("*** Creating new vocabulary ***")
 
-    # get all pitch names
-    pitchnames = sorted(set(item for item in notes))
+    # these are either notes or chords
+    sound_names = sorted(set(item for item in notes))
+    vocab = dict((note, number) for number, note in enumerate(sound_names))
 
-    # create a dictionary to map pitches to integers
-    note_to_int = dict((note, number) for number, note in enumerate(pitchnames))
+    vocab_path = os.path.join(DATA_DIR, VOCABULARY_FILENAME)
+    with open(vocab_path, "wb") as vocab_data_file:
+        pickle.dump(vocab, vocab_data_file)
 
-    network_input = []
-    network_output = []
+    return vocab
 
-    # create input sequences and the corresponding outputs
-    for i in range(0, len(notes) - sequence_length, 1):
-        sequence_in = notes[i : i + sequence_length]
-        sequence_out = notes[i + sequence_length]
-        network_input.append([note_to_int[char] for char in sequence_in])
-        network_output.append(note_to_int[sequence_out])
 
-    n_patterns = len(network_input)
+def load_vocabulary_from_training():
+    print("*** Restoring vocabulary used for training ***")
 
-    # reshape the input into a format compatible with LSTM layers
-    unnormalized_network_input = np.reshape(
-        network_input, (n_patterns, sequence_length, 1)
+    vocab_path = os.path.join(DATA_DIR, VOCABULARY_FILENAME)
+    with open(vocab_path, "rb") as vocab_data_file:
+        return pickle.load(vocab_data_file)
+
+
+def prepare_sequences_for_training(notes, vocab, vocab_size, batch_size):
+    training_split = 1 - VALIDATION_SPLIT
+    dataset_split = math.ceil(training_split * len(notes))
+    training_sequence = NotesSequence(
+        notes[:dataset_split],
+        batch_size,
+        SEQUENCE_LENGTH,
+        vocab,
+        vocab_size,
+        NUM_NOTES_TO_PREDICT,
     )
-    normalized_network_input = unnormalized_network_input / float(n_vocab)
+    validation_sequence = NotesSequence(
+        notes[dataset_split:],
+        batch_size,
+        SEQUENCE_LENGTH,
+        vocab,
+        vocab_size,
+        NUM_NOTES_TO_PREDICT,
+    )
 
-    network_output = np_utils.to_categorical(network_output)
-
-    return (normalized_network_input, network_output)
+    return training_sequence, validation_sequence
 
 
-def prepare_sequences_for_prediction(notes, pitchnames, n_vocab):
-    """Prepare the sequences used by the Neural Network"""
-    # map between notes and integers and back
-    note_to_int = dict((note, number) for number, note in enumerate(pitchnames))
+def prepare_sequence_for_prediction(notes, vocab):
+    if len(notes) < SEQUENCE_LENGTH:
+        print(
+            f"File is to short. Min length: {SEQUENCE_LENGTH} sounds, provided: {len(notes)}."
+        )
+        sys.exit(1)
 
-    sequence_length = 100
-    network_input = []
-    output = []
-    for i in range(0, len(notes) - sequence_length, 1):
-        sequence_in = notes[i : i + sequence_length]
-        sequence_out = notes[i + sequence_length]
-        network_input.append([note_to_int[char] for char in sequence_in])
-        output.append(note_to_int[sequence_out])
+    sequence_in = notes[:SEQUENCE_LENGTH]
+    network_input = [get_best_representation(vocab, sound) for sound in sequence_in]
 
-    n_patterns = len(network_input)
+    return network_input
 
-    # reshape the input into a format compatible with LSTM layers
-    unnormalized_input = np.reshape(network_input, (n_patterns, sequence_length, 1))
-    normalized_input = unnormalized_input / float(n_vocab)
 
-    return (network_input, normalized_input)
+def get_best_representation(vocab, pattern):
+    """assumption: all 12 single notes are present in vocabulary"""
+    if pattern in vocab.keys():
+        return vocab[pattern]
+
+    chord_sounds = [int(sound) for sound in pattern.split(".")]
+    unknown_chord = chord.Chord(chord_sounds)
+    root_note = unknown_chord.root()
+    print(f"*** Mapping {unknown_chord} to {root_note} ***")
+    return vocab[root_note.name]
 
 
 def save_midi_file(prediction_output):
-    """convert the output from the prediction to notes and create a midi file
-    from the notes"""
     offset = 0
     output_notes = []
 
@@ -183,6 +212,15 @@ def save_midi_file(prediction_output):
         # increase offset each iteration so that notes do not stack
         offset += 0.5
 
-    midi_stream = stream.Stream(output_notes)
+    output_name = ""
+    try:
+        random_words = RandomWords().get_random_words()
+        for i in range(2):
+            output_name += random_words[i] + "_"
+        output_name = output_name.rstrip("_").lower()
 
-    midi_stream.write("midi", fp=f"{RESULTS_DIR}/output-{datetime.datetime.now()}.mid")
+    except:
+        output_name = f"output_{datetime.datetime.now()}"
+
+    midi_stream = stream.Stream(output_notes)
+    midi_stream.write("midi", fp=f"{RESULTS_DIR}/{output_name}.mid")

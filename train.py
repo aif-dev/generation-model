@@ -1,58 +1,94 @@
 import os
 import datetime
+import getopt
+import sys
 import tensorflow as tf
 from keras.models import load_model
 from keras.callbacks import ModelCheckpoint, EarlyStopping, TensorBoard
 from network import create_network
-from data_preparation import get_notes_from_dataset, prepare_sequences_for_training
+from data_preparation import (
+    get_notes_from_dataset,
+    prepare_sequences_for_training,
+    create_vocabulary_for_training,
+    clean_data_and_checkpoints,
+)
 
 
 LOG_DIR = "logs/"
+BATCH_SIZE = 128
+
+
+def get_latest_checkpoint():
+    if not os.path.isdir("checkpoints"):
+        os.mkdir("checkpoints")
+        return None
+
+    checkpoints = ["checkpoints/" + name for name in os.listdir("checkpoints/")]
+    if checkpoints:
+        return max(checkpoints, key=os.path.getctime)
+    else:
+        return None
 
 
 def train_network():
     notes = get_notes_from_dataset()
+    vocab = create_vocabulary_for_training(notes)
+    vocab_size = len(vocab)
 
-    # get amount of pitch names
-    n_vocab = len(set(notes))
+    training_sequence, validation_sequence = prepare_sequences_for_training(
+        notes, vocab, vocab_size, BATCH_SIZE
+    )
 
-    network_input, network_output = prepare_sequences_for_training(notes, n_vocab)
+    latest_checkpoint = get_latest_checkpoint()
 
-    if not os.path.isdir("checkpoints"):
-        os.mkdir("checkpoints")
-
-    checkpoints = ["checkpoints/" + name for name in os.listdir("checkpoints/")]
-    if checkpoints:
-        latest_checkpoint = max(checkpoints, key=os.path.getctime)
+    if latest_checkpoint:
         print(f"*** Restoring from the lastest checkpoint: {latest_checkpoint} ***")
         model = load_model(latest_checkpoint)
     else:
-        model = create_network(network_input, n_vocab)
+        model = create_network(vocab_size)
 
-    train(model, network_input, network_output)
+    train(model, training_sequence, validation_sequence)
 
 
-def train(model, network_input, network_output):
+def train(model, training_sequence, validation_sequence):
     filepath = "checkpoints/weights-improvement-{epoch:02d}-{loss:.4f}-bigger.hdf5"
-    modelCheckpoint = ModelCheckpoint(
+    model_checkpoint = ModelCheckpoint(
         filepath, monitor="loss", verbose=0, save_best_only=True, mode="min"
     )
 
-    earlyStopping = EarlyStopping(monitor="val_loss", patience=3)
+    early_stopping = EarlyStopping(monitor="val_loss", patience=3)
 
     logdir = LOG_DIR + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    tensorBoard = TensorBoard(log_dir=logdir)
+    tensorboard = TensorBoard(log_dir=logdir)
 
-    callbacks_list = [modelCheckpoint, earlyStopping, tensorBoard]
+    callbacks_list = [model_checkpoint, early_stopping, tensorboard]
 
     model.fit(
-        network_input,
-        network_output,
-        validation_split=0.2,
+        x=training_sequence,
+        validation_data=validation_sequence,
         epochs=200,
-        batch_size=128,
         callbacks=callbacks_list,
+        shuffle=True,
     )
+
+
+def parse_cli_args():
+    usage_str = (
+        f"Usage: {sys.argv[0]} [-h] [-c | --clean (clean data/ and checkpoints/)]"
+    )
+
+    try:
+        opts, _ = getopt.getopt(sys.argv[1:], "hc", ["clean"])
+    except getopt.GetoptError:
+        print(usage_str)
+        sys.exit(2)
+
+    for opt, _ in opts:
+        if opt == "-h":
+            print(usage_str)
+            sys.exit(0)
+        elif opt in ["-c", "--clean"]:
+            clean_data_and_checkpoints()
 
 
 if __name__ == "__main__":
@@ -60,4 +96,5 @@ if __name__ == "__main__":
     for gpu in gpus:
         tf.config.experimental.set_memory_growth(gpu, True)
 
+    parse_cli_args()
     train_network()

@@ -15,6 +15,7 @@ keras = "~=2.4.3"
 tensorflow = "~=2.4.0"
 wget = "~=3.2"
 pyngrok = "*"
+random-word = "*"
 
 [requires]
 python_version = "3.8"

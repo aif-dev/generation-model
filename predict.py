@@ -1,12 +1,20 @@
-""" This module generates notes for a midi file using the
-    trained neural network """
 import os
 import sys
+import getopt
 import pickle
 import tensorflow as tf
 import numpy as np
 from network import create_network
-from data_preparation import save_midi_file, prepare_sequences_for_prediction, get_notes_from_file
+from data_preparation import (
+    save_midi_file,
+    prepare_sequence_for_prediction,
+    load_vocabulary_from_training,
+    get_notes_from_file,
+)
+from data_preparation import SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT
+
+
+NUM_NOTES_TO_GENERATE = 300
 
 
 def get_best_weights_filename():
@@ -22,71 +30,75 @@ def get_best_weights_filename():
         loss = float(checkpoint.split("-")[3])
 
         if loss < lowest_loss:
+            lowest_loss = loss
             best_checkpoint = checkpoint
 
     print(f"*** Found checkpoint with the best weights: {best_checkpoint} ***")
     return best_checkpoint
 
 
-def generate_notes(model, network_input, pitchnames, n_vocab):
-    """Generate notes from the neural network based on a sequence of notes"""
-    # pick a random sequence from the input as a starting point for the prediction
-    start = np.random.randint(0, len(network_input) - 1)
-
-    int_to_note = dict((number, note) for number, note in enumerate(pitchnames))
-
-    pattern = network_input[start]
+def generate_notes(model, network_input, vocab, vocab_size):
+    inverted_vocab = {i: note for note, i in vocab.items()}
+    sequence_in = [note_idx / float(vocab_size) for note_idx in network_input]
     prediction_output = []
 
-    # generate 500 notes
-    for _ in range(500):
-        prediction_input = np.reshape(pattern, (1, len(pattern), 1))
-        prediction_input = prediction_input / float(n_vocab)
+    for _ in range(NUM_NOTES_TO_GENERATE):
+        prediction_input = np.reshape(
+            sequence_in, (1, SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT)
+        )
 
         prediction = model.predict(prediction_input, verbose=0)
+        best_note_idx = np.argmax(prediction)
+        best_note = inverted_vocab[best_note_idx]
+        prediction_output.append(best_note)
 
-        index = np.argmax(prediction)
-        result = int_to_note[index]
-        prediction_output.append(result)
+        normalized_best_note_idx = best_note_idx / float(vocab_size)
+        sequence_in.append(normalized_best_note_idx)
 
-        pattern.append(index)
-        pattern = pattern[1 : len(pattern)]
+        # store only last 'SEQUENCE_LENGTH' elements for next prediction
+        sequence_in = sequence_in[
+            NUM_NOTES_TO_PREDICT : SEQUENCE_LENGTH + NUM_NOTES_TO_PREDICT
+        ]
 
     return prediction_output
 
 
-def generate_music():
-    """Generate a piano midi file"""
-    # load the notes used to train the model
-    with open("data/notes", "rb") as filepath:
-        notes = pickle.load(filepath)
+def generate_music(file):
+    notes = get_notes_from_file(file)
+    vocab = load_vocabulary_from_training()
+    vocab_size = len(vocab)
 
-    # Get all pitch names
-    pitchnames = sorted(set(item for item in notes))
-    # Get all pitch names
-    n_vocab = len(set(notes))
-
-    network_input, normalized_input = prepare_sequences_for_prediction(
-        notes, pitchnames, n_vocab
-    )
-    model = create_network(normalized_input, n_vocab, get_best_weights_filename())
-    prediction_output = generate_notes(model, network_input, pitchnames, n_vocab)
+    network_input = prepare_sequence_for_prediction(notes, vocab)
+    model = create_network(vocab_size, get_best_weights_filename())
+    prediction_output = generate_notes(model, network_input, vocab, vocab_size)
     save_midi_file(prediction_output)
 
 
-def generate_music_from_file(filename):
-    notes = get_notes_from_file(filename)
-    # Get all pitch names
-    pitchnames = sorted(set(item for item in notes))
-    # Get all pitch names
-    n_vocab = len(set(notes))
+def parse_cli_args():
+    usage_str = f"Usage: {sys.argv[0]} [-h] -f <seed_midi_file>"
 
-    network_input, normalized_input = prepare_sequences_for_prediction(
-        notes, pitchnames, n_vocab
-    )
-    model = create_network(normalized_input, n_vocab, get_best_weights_filename())
-    prediction_output = generate_notes(model, network_input, pitchnames, n_vocab)
-    save_midi_file(prediction_output)
+    try:
+        opts, _ = getopt.getopt(sys.argv[1:], "hf:")
+    except getopt.GetoptError:
+        print(usage_str)
+        sys.exit(2)
+
+    is_file_present = False
+
+    for opt, arg in opts:
+        if opt == "-h":
+            print(usage_str)
+            sys.exit(0)
+        elif opt == "-f":
+            is_file_present = True
+            file = arg
+
+    if not is_file_present:
+        print("Midi file not provided.")
+        print(usage_str)
+        sys.exit(2)
+
+    return file
 
 
 if __name__ == "__main__":
@@ -94,4 +106,5 @@ if __name__ == "__main__":
     for gpu in gpus:
         tf.config.experimental.set_memory_growth(gpu, True)
 
-    generate_music()
+    file = parse_cli_args()
+    generate_music(file)
