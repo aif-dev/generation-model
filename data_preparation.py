@@ -6,6 +6,7 @@ import math
 import datetime
 import shutil
 import checksumdir
+from functools import partial
 import numpy as np
 from multiprocessing import Pool, cpu_count
 from collections import Counter
@@ -74,22 +75,41 @@ def is_data_changed():
     return False
 
 
-def get_notes_from_file(file):
+def get_notes_from_file(file, augment_data=True, semitones_augmentation=1):
     print(f"Parsing {file}")
 
     try:
-        midi = converter.parse(file)
+        midi_stream = converter.parse(file)
     except:
         return []
 
+    if augment_data:
+        transposed_streams = []
+        for interval in range(-semitones_augmentation, semitones_augmentation + 1):
+            transposed_stream = midi_stream.transpose(interval)
+            transposed_streams.append(transposed_stream)
+
+        all_notes = []
+        for transposed_stream in transposed_streams:
+            notes = get_notes_from_midi_stream(transposed_stream)
+            for note in notes:
+                all_notes.append(note)
+
+    else:
+        all_notes = get_notes_from_midi_stream(midi_stream)
+
+    return all_notes
+
+
+def get_notes_from_midi_stream(midi_stream):
     notes = []
     try:
         # file has instrument parts
-        instrument_stream = instrument.partitionByInstrument(midi)
+        instrument_stream = instrument.partitionByInstrument(midi_stream)
         notes_to_parse = instrument_stream.parts[0].recurse()
     except:
         # file has notes in a flat structure
-        notes_to_parse = midi.flat.notes
+        notes_to_parse = midi_stream.flat.notes
 
     for element in notes_to_parse:
         if isinstance(element, note.Note):
@@ -107,9 +127,8 @@ def get_notes_from_dataset():
     if is_data_changed():
         try:
             with Pool(cpu_count() - 1) as pool:
-                notes_from_files = pool.map(
-                    get_notes_from_file, glob.glob(f"{MIDI_SONGS_DIR}/*.mid")
-                )
+                files = glob.glob(f"{MIDI_SONGS_DIR}/*.mid")
+                notes_from_files = pool.map(get_notes_from_file, files)
 
             for notes_from_file in notes_from_files:
                 for note in notes_from_file:
@@ -202,16 +221,40 @@ def get_class_weights(notes, vocab):
 
 
 def get_best_representation(vocab, pattern):
-    # assumption: all single notes are present in vocabulary
+    # assumption: all single notes (not necessarily from the same octave)
+    #             are present in vocabulary
 
     if pattern in vocab.keys():
         return vocab[pattern]
 
+    # either an unknown chord or an unknown single note
     chord_midis = [int(midi) for midi in pattern.split(".")]
     unknown_chord = chord.Chord(chord_midis)
     root_note = unknown_chord.root()
-    print(f"*** Mapping {unknown_chord} to {root_note} ***")
-    return vocab[root_note.pitch.midi]
+
+    nearest_note_midi = find_nearest_single_note_midi(vocab, root_note.midi)
+    print(f"*** Mapping {pattern} to {nearest_note_midi} ***")
+    return vocab[str(nearest_note_midi)]
+
+
+def find_nearest_single_note_midi(vocab, midi_note):
+    if str(midi_note) in vocab.keys():
+        return midi_note
+
+    midi_note_down = midi_note
+    midi_note_up = midi_note
+
+    while midi_note_down >= 0 or midi_note_up <= 87:
+        midi_note_down -= 12
+        midi_note_up += 12
+
+        if midi_note_down >= 0 and str(midi_note_down) in vocab.keys():
+            return midi_note_down
+
+        elif midi_note_up <= 87 and str(midi_note_up) in vocab.keys():
+            return midi_note_up
+
+    raise Exception(f"Midi note {midi_note} not found in the vocabulary")
 
 
 def save_midi_file(prediction_output):
