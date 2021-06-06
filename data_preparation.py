@@ -5,7 +5,9 @@ import pickle
 import math
 import datetime
 import shutil
+import random
 from multiprocessing import Pool, cpu_count
+from collections import Counter
 import checksumdir
 from music21 import converter, instrument, stream, note, chord
 from random_word import RandomWords
@@ -14,12 +16,12 @@ from notes_sequence import NotesSequence
 
 CHECKPOINTS_DIR = "checkpoints"
 MIDI_SONGS_DIR = "midi_songs"
-DATA_DIR = "data"
+TRAINING_DATA_DIR = "training_data"
 NOTES_FILENAME = "notes"
 VOCABULARY_FILENAME = "vocabulary"
 HASH_FILENAME = "dataset_hash"
 RESULTS_DIR = "results"
-SEQUENCE_LENGTH = 100
+SEQUENCE_LENGTH = 60
 VALIDATION_SPLIT = 0.2
 
 """
@@ -31,16 +33,25 @@ data_preparation.py -> loop inside prepare_sequences_for_training() [out sequenc
 NUM_NOTES_TO_PREDICT = 1
 
 
-def clean_data_and_checkpoints():
-    shutil.rmtree(DATA_DIR)
-    shutil.rmtree(CHECKPOINTS_DIR)
+def clear_checkpoints():
+    try:
+        shutil.rmtree(CHECKPOINTS_DIR)
+    except FileNotFoundError:
+        print("Checkpoints directory doesn't exist")
+
+
+def clear_training_data():
+    try:
+        shutil.rmtree(TRAINING_DATA_DIR)
+    except FileNotFoundError:
+        print("Training data directory doesn't exist")
 
 
 def save_data_hash(hash_value):
-    if not os.path.isdir(DATA_DIR):
-        os.mkdir(DATA_DIR)
+    if not os.path.isdir(TRAINING_DATA_DIR):
+        os.mkdir(TRAINING_DATA_DIR)
 
-    hash_file_path = os.path.join(DATA_DIR, HASH_FILENAME)
+    hash_file_path = os.path.join(TRAINING_DATA_DIR, HASH_FILENAME)
     with open(hash_file_path, "wb") as hash_file:
         pickle.dump(hash_value, hash_file)
 
@@ -48,7 +59,7 @@ def save_data_hash(hash_value):
 def is_data_changed():
     current_hash = checksumdir.dirhash(MIDI_SONGS_DIR)
 
-    hash_file_path = os.path.join(DATA_DIR, HASH_FILENAME)
+    hash_file_path = os.path.join(TRAINING_DATA_DIR, HASH_FILENAME)
     if not os.path.exists(hash_file_path):
         save_data_hash(current_hash)
         return True
@@ -63,37 +74,90 @@ def is_data_changed():
     return False
 
 
-def get_notes_from_file(file):
-    print(f"Parsing {file}")
+def get_midi_in_default_octave(pattern):
+    if isinstance(pattern, note.Note):
+        note_in_default_octave = note.Note(pattern.name)
+    elif isinstance(pattern, int):
+        note_in_default_octave = note.Note(pattern)
 
-    midi = converter.parse(file)
+    return note_in_default_octave.pitch.midi
+
+
+def map_midi_to_reduced_octaves(midi_value, min_midi=4 * 12, max_midi=5 * 12 - 1):
+    if midi_value > max_midi:
+        return midi_value - (math.ceil((midi_value - max_midi) / 12) * 12)
+
+    if midi_value < min_midi:
+        return midi_value + (math.ceil((min_midi - midi_value) / 12) * 12)
+
+    return midi_value
+
+
+def get_notes_from_midi_stream(midi_stream, octave_transposition=0):
+    transposition = octave_transposition * 12
     notes = []
-    try:
-        # file has instrument parts
-        instrument_stream = instrument.partitionByInstrument(midi)
-        notes_to_parse = instrument_stream.parts[0].recurse()
-    except:
-        # file has notes in a flat structure
-        notes_to_parse = midi.flat.notes
+    s2 = instrument.partitionByInstrument(midi_stream)
 
-    for element in notes_to_parse:
-        if isinstance(element, note.Note):
-            notes.append(element.name)
-        elif isinstance(element, chord.Chord):
-            notes.append(".".join(str(n) for n in element.normalOrder))
+    # Looping over all the instruments
+    for part in s2.parts:
 
+        # select elements of only piano
+        if "Piano" in str(part):
+
+            notes_to_parse = part.recurse()
+
+            # finding whether a particular element is note or a chord
+            for element in notes_to_parse:
+
+                # note
+                if isinstance(element, note.Note):
+                    midi_value = (
+                        map_midi_to_reduced_octaves(element.pitch.midi) + transposition
+                    )
+                    notes.append(str(midi_value))
+
+                # chord
+                elif isinstance(element, chord.Chord):
+                    midi_values = [
+                        map_midi_to_reduced_octaves(pitch.midi) + transposition
+                        for pitch in element.pitches
+                    ]
+                    midi_values = list(set(midi_values))
+                    notes.append(".".join(str(midi) for midi in sorted(midi_values)))
     return notes
 
 
+def get_notes_from_file(file, augment_data=False, octave_augmentation=1):
+    print(f"Parsing {file}")
+
+    try:
+        midi_stream = converter.parse(file)
+    except:
+        return []
+
+    if augment_data:
+        all_notes = []
+        for octave_transposition in range(
+            -octave_augmentation, octave_augmentation + 1
+        ):
+            notes = get_notes_from_midi_stream(midi_stream, octave_transposition)
+            for note in notes:
+                all_notes.append(note)
+
+    else:
+        all_notes = get_notes_from_midi_stream(midi_stream)
+
+    return all_notes
+
+
 def get_notes_from_dataset():
-    notes_path = os.path.join(DATA_DIR, NOTES_FILENAME)
+    notes_path = os.path.join(TRAINING_DATA_DIR, NOTES_FILENAME)
     notes = []
     if is_data_changed():
         try:
             with Pool(cpu_count() - 1) as pool:
-                notes_from_files = pool.map(
-                    get_notes_from_file, glob.glob(f"{MIDI_SONGS_DIR}/*.mid")
-                )
+                files = glob.glob(f"{MIDI_SONGS_DIR}/*.mid")
+                notes_from_files = pool.map(get_notes_from_file, files)
 
             for notes_from_file in notes_from_files:
                 for note in notes_from_file:
@@ -103,7 +167,7 @@ def get_notes_from_dataset():
                 pickle.dump(notes, notes_data_file)
 
         except:
-            hash_file_path = os.path.join(DATA_DIR, HASH_FILENAME)
+            hash_file_path = os.path.join(TRAINING_DATA_DIR, HASH_FILENAME)
             os.remove(hash_file_path)
             print("Removed the hash file")
             sys.exit(1)
@@ -122,9 +186,11 @@ def create_vocabulary_for_training(notes):
     sound_names = sorted(set(item for item in notes))
     vocab = dict((note, number) for number, note in enumerate(sound_names))
 
-    vocab_path = os.path.join(DATA_DIR, VOCABULARY_FILENAME)
+    vocab_path = os.path.join(TRAINING_DATA_DIR, VOCABULARY_FILENAME)
     with open(vocab_path, "wb") as vocab_data_file:
         pickle.dump(vocab, vocab_data_file)
+
+    print(f"*** vocabulary size: {len(vocab)} ***")
 
     return vocab
 
@@ -132,7 +198,7 @@ def create_vocabulary_for_training(notes):
 def load_vocabulary_from_training():
     print("*** Restoring vocabulary used for training ***")
 
-    vocab_path = os.path.join(DATA_DIR, VOCABULARY_FILENAME)
+    vocab_path = os.path.join(TRAINING_DATA_DIR, VOCABULARY_FILENAME)
     with open(vocab_path, "rb") as vocab_data_file:
         return pickle.load(vocab_data_file)
 
@@ -173,16 +239,56 @@ def prepare_sequence_for_prediction(notes, vocab):
     return network_input
 
 
+def get_class_weights(notes, vocab):
+    mapped_notes = [vocab[note] for note in notes]
+    notes_counter = Counter(mapped_notes)
+
+    for key in notes_counter:
+        notes_counter[key] = 1 / notes_counter[key]
+
+    return notes_counter
+
+
 def get_best_representation(vocab, pattern):
-    """assumption: all 12 single notes are present in vocabulary"""
+    # assumption: all single notes (not necessarily from the same octave)
+    #             are present in vocabulary
+
     if pattern in vocab.keys():
         return vocab[pattern]
 
-    chord_sounds = [int(sound) for sound in pattern.split(".")]
-    unknown_chord = chord.Chord(chord_sounds)
+    # either an unknown chord or an unknown single note
+    chord_midis = [int(midi) for midi in pattern.split(".")]
+    unknown_chord = chord.Chord(chord_midis)
     root_note = unknown_chord.root()
-    print(f"*** Mapping {unknown_chord} to {root_note} ***")
-    return vocab[root_note.name]
+
+    nearest_note_midi = find_nearest_single_note_midi(vocab, root_note.midi)
+    print(f"*** Mapping {pattern} to {nearest_note_midi} ***")
+    return vocab[str(nearest_note_midi)]
+
+
+def find_nearest_single_note_midi(vocab, midi_note):
+    if str(midi_note) in vocab.keys():
+        return midi_note
+
+    midi_note_down = midi_note
+    midi_note_up = midi_note
+
+    while midi_note_down >= 0 or midi_note_up <= 87:
+        midi_note_down -= 12
+        midi_note_up += 12
+
+        print(f"{midi_note} {midi_note_up} {midi_note_down}")
+
+        if midi_note_down >= 0 and str(midi_note_down) in vocab.keys():
+            return midi_note_down
+
+        if midi_note_up <= 87 and str(midi_note_up) in vocab.keys():
+            return midi_note_up
+
+    print(
+        f"ALERT: couldn't find any appropriate representation of {midi_note} in vocabulary. Returned a random representation."
+    )
+    return random.choice([key for key in vocab.keys() if not "." in key])
 
 
 def save_midi_file(prediction_output):
@@ -193,18 +299,20 @@ def save_midi_file(prediction_output):
     for pattern in prediction_output:
         # pattern is a chord
         if ("." in pattern) or pattern.isdigit():
-            notes_in_chord = pattern.split(".")
+            midis_in_chord = [int(midi) for midi in pattern.split(".")]
             notes = []
-            for current_note in notes_in_chord:
-                new_note = note.Note(int(current_note))
+            for current_midi in midis_in_chord:
+                new_note = note.Note(current_midi)
                 new_note.storedInstrument = instrument.Piano()
                 notes.append(new_note)
+
             new_chord = chord.Chord(notes)
             new_chord.offset = offset
             output_notes.append(new_chord)
         # pattern is a note
         else:
-            new_note = note.Note(pattern)
+            midi = int(pattern)
+            new_note = note.Note(midi)
             new_note.offset = offset
             new_note.storedInstrument = instrument.Piano()
             output_notes.append(new_note)
@@ -224,3 +332,5 @@ def save_midi_file(prediction_output):
 
     midi_stream = stream.Stream(output_notes)
     midi_stream.write("midi", fp=f"{RESULTS_DIR}/{output_name}.mid")
+
+    print(f"Result saved as {output_name}")

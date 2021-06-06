@@ -1,7 +1,6 @@
 import os
 import sys
 import getopt
-import pickle
 import tensorflow as tf
 import numpy as np
 from network import create_network
@@ -64,7 +63,7 @@ def generate_notes(model, network_input, vocab, vocab_size):
 
 
 def generate_music(file):
-    notes = get_notes_from_file(file)
+    notes = get_notes_from_file(file, augment_data=False)
     vocab = load_vocabulary_from_training()
     vocab_size = len(vocab)
 
