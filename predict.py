@@ -1,7 +1,6 @@
 import os
 import sys
 import getopt
-import pickle
 import tensorflow as tf
 import numpy as np
 from network import create_network

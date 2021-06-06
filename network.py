@@ -1,16 +1,10 @@
 from keras.models import Sequential
-from keras.layers import (
-    Dense,
-    Dropout,
-    LSTM,
-    BatchNormalization as BatchNorm,
-    Activation,
-)
+from keras.layers import Dense, Dropout, LSTM, Activation
 from data_preparation import SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT
 
 
 def create_network(vocab_size, weights_filename=None):
-    lstm_units = 256
+    lstm_units = 128
     dense_units = 256
     dropout_rate = 0.3
     model = Sequential()
@@ -21,14 +15,13 @@ def create_network(vocab_size, weights_filename=None):
             return_sequences=True,
         )
     )
-    model.add(LSTM(lstm_units, return_sequences=True))
-    model.add(LSTM(lstm_units))
-    model.add(BatchNorm())
-    model.add(Activation("relu"))
     model.add(Dropout(dropout_rate))
+    model.add(LSTM(lstm_units, return_sequences=True))
+    model.add(Dropout(dropout_rate))
+    model.add(LSTM(lstm_units, return_sequences=True))
+    model.add(Dropout(dropout_rate))
+    model.add(LSTM(lstm_units))
     model.add(Dense(dense_units))
-    model.add(BatchNorm())
-    model.add(Activation("relu"))
     model.add(Dropout(dropout_rate))
     model.add(Dense(vocab_size))
     model.add(Activation("softmax"))

@@ -1,10 +1,7 @@
-import os
+from collections import Counter
+from math import ceil, sqrt
 import matplotlib.pyplot as plt
 import pandas as pd
-import numpy as np
-from collections import Counter
-from math import ceil, sqrt, log
-from scipy.stats import norm
 from statsmodels.graphics.gofplots import qqplot
 from data_preparation import get_notes_from_dataset, create_vocabulary_for_training
 from train import DATASET_PERCENT

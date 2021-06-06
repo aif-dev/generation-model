@@ -2,15 +2,9 @@ import os
 import datetime
 import getopt
 import sys
-import math
 import tensorflow as tf
 from keras.models import load_model
-from keras.callbacks import (
-    ModelCheckpoint,
-    EarlyStopping,
-    TensorBoard,
-    ReduceLROnPlateau,
-)
+from keras.callbacks import ModelCheckpoint, TensorBoard
 from network import create_network
 from data_preparation import (
     get_notes_from_dataset,
@@ -35,8 +29,8 @@ def get_latest_checkpoint():
     checkpoints = ["checkpoints/" + name for name in os.listdir("checkpoints/")]
     if checkpoints:
         return max(checkpoints, key=os.path.getctime)
-    else:
-        return None
+
+    return None
 
 
 def train_network():
@@ -65,24 +59,13 @@ def train_network():
 def train(model, training_sequence, validation_sequence, class_weights):
     filepath = "checkpoints/weights-improvement-{epoch:02d}-{loss:.4f}-bigger.hdf5"
     model_checkpoint = ModelCheckpoint(
-        filepath, monitor="loss", verbose=0, save_best_only=True, mode="min"
+        filepath, monitor="val_acc", verbose=0, save_best_only=True, mode="max"
     )
-
-    early_stopping = EarlyStopping(monitor="val_loss", patience=5)
 
     logdir = LOG_DIR + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     tensorboard = TensorBoard(log_dir=logdir)
 
-    reduce_lr_on_pleateau = ReduceLROnPlateau(
-        monitor="val_loss", factor=0.2, patience=2, min_lr=1e-5
-    )
-
-    callbacks_list = [
-        model_checkpoint,
-        # early_stopping,
-        tensorboard,
-        reduce_lr_on_pleateau,
-    ]
+    callbacks_list = [model_checkpoint, tensorboard]
 
     model.fit(
         x=training_sequence,

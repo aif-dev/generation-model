@@ -5,11 +5,9 @@ import pickle
 import math
 import datetime
 import shutil
-import checksumdir
-from functools import partial
-import numpy as np
 from multiprocessing import Pool, cpu_count
 from collections import Counter
+import checksumdir
 from music21 import converter, instrument, stream, note, chord
 from random_word import RandomWords
 from notes_sequence import NotesSequence
@@ -251,7 +249,7 @@ def find_nearest_single_note_midi(vocab, midi_note):
         if midi_note_down >= 0 and str(midi_note_down) in vocab.keys():
             return midi_note_down
 
-        elif midi_note_up <= 87 and str(midi_note_up) in vocab.keys():
+        if midi_note_up <= 87 and str(midi_note_up) in vocab.keys():
             return midi_note_up
 
     raise Exception(f"Midi note {midi_note} not found in the vocabulary")
