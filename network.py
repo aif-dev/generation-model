@@ -24,29 +24,29 @@ def create_network(vocab_size, weights_filename=None):
     # original (without recurrent_dropout for cudnn)
     # val_loss ~=
     #
-    lstm_units = 512
-    model = Sequential()
-    model.add(
-        LSTM(
-            lstm_units,
-            input_shape=(SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT),
-            return_sequences=True,
-        )
-    )
-    model.add(GaussianNoise(0.075))
-    model.add(LSTM(lstm_units, return_sequences=True))
-    model.add(GaussianNoise(0.075))
-    model.add(LSTM(lstm_units))
-    model.add(BatchNorm())
-    model.add(Activation("relu"))
-    model.add(Dropout(0.3))
-    model.add(Dense(256))
-    model.add(BatchNorm())
-    model.add(Activation("relu"))
-    model.add(Dropout(0.3))
-    model.add(Dense(vocab_size))
-    model.add(Activation("softmax"))
-    model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["acc"])
+    # lstm_units = 256
+    # model = Sequential()
+    # model.add(
+    #     LSTM(
+    #         lstm_units,
+    #         input_shape=(SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT),
+    #         return_sequences=True,
+    #     )
+    # )
+    # model.add(GaussianNoise(0.075))
+    # model.add(LSTM(lstm_units, return_sequences=True))
+    # model.add(GaussianNoise(0.075))
+    # model.add(LSTM(lstm_units))
+    # model.add(BatchNorm())
+    # model.add(Activation("relu"))
+    # model.add(Dropout(0.3))
+    # model.add(Dense(256))
+    # model.add(BatchNorm())
+    # model.add(Activation("relu"))
+    # model.add(Dropout(0.3))
+    # model.add(Dense(vocab_size))
+    # model.add(Activation("softmax"))
+    # model.compile(loss="categorical_crossentropy", optimizer="rmsprop", metrics=["acc"])
 
     # our
     # val_loss ~= 1800
@@ -74,24 +74,24 @@ def create_network(vocab_size, weights_filename=None):
     # https://github.com/Skuldur/Classical-Piano-Composer/pull/21
     # val_loss ~= 5
     #
-    # lstm_units = 512
-    # dropout_rate = 0.3
-    # model = Sequential()
-    # model.add(
-    #     LSTM(
-    #         lstm_units,
-    #         input_shape=(SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT),
-    #         return_sequences=True,
-    #     )
-    # )
-    # model.add(Dropout(dropout_rate))
-    # model.add(LSTM(lstm_units, return_sequences=True))
-    # model.add(Dropout(dropout_rate))
-    # model.add(LSTM(lstm_units))
-    # model.add(BatchNorm())
-    # model.add(Dense(vocab_size))
-    # model.add(Activation("softmax"))
-    # model.compile(loss="categorical_crossentropy", optimizer="rmsprop")
+    lstm_units = 256
+    dropout_rate = 0.3
+    model = Sequential()
+    model.add(
+        LSTM(
+            lstm_units,
+            input_shape=(SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT),
+            return_sequences=True,
+        )
+    )
+    model.add(Dropout(dropout_rate))
+    model.add(LSTM(lstm_units, return_sequences=True))
+    model.add(Dropout(dropout_rate))
+    model.add(LSTM(lstm_units))
+    model.add(BatchNorm())
+    model.add(Dense(vocab_size))
+    model.add(Activation("softmax"))
+    model.compile(loss="categorical_crossentropy", optimizer="rmsprop", metrics=["acc"])
 
     # https://arxiv.org/pdf/2006.09838v1.pdf
     # val_loss ~= 3.6
