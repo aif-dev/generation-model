@@ -172,6 +172,16 @@ def get_midi_in_default_octave(pattern):
     return note_in_default_octave.pitch.midi
 
 
+def map_midi_to_reduced_octaves(midi_value, min_midi=4 * 12, max_midi=5 * 12 - 1):
+    if midi_value > max_midi:
+        return midi_value - (math.ceil((midi_value - max_midi) / 12) * 12)
+
+    if midi_value < min_midi:
+        return midi_value + (math.ceil((min_midi - midi_value) / 12) * 12)
+
+    return midi_value
+
+
 def get_notes_from_midi_stream(midi_stream, octave_transposition=0):
     transposition = octave_transposition * 12
     notes = []
@@ -190,22 +200,23 @@ def get_notes_from_midi_stream(midi_stream, octave_transposition=0):
 
                 # note
                 if isinstance(element, note.Note):
-                    notes.append(
-                        str(get_midi_in_default_octave(element) + transposition)
+                    midi_value = (
+                        map_midi_to_reduced_octaves(element.pitch.midi) + transposition
                     )
+                    notes.append(str(midi_value))
 
                 # chord
                 elif isinstance(element, chord.Chord):
-                    notes.append(
-                        ".".join(
-                            str(get_midi_in_default_octave(n) + transposition)
-                            for n in sorted(element.normalOrder)
-                        )
-                    )
+                    midi_values = [
+                        map_midi_to_reduced_octaves(pitch.midi) + transposition
+                        for pitch in element.pitches
+                    ]
+                    midi_values = list(set(midi_values))
+                    notes.append(".".join(str(midi) for midi in sorted(midi_values)))
     return notes
 
 
-def get_notes_from_file(file, augment_data=True, octave_augmentation=1):
+def get_notes_from_file(file, augment_data=False, octave_augmentation=1):
     print(f"Parsing {file}")
 
     try:

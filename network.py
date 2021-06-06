@@ -5,7 +5,7 @@ from data_preparation import SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT
 
 def create_network(vocab_size, weights_filename=None):
     lstm_units = 128
-    dense_units = 256
+    dense_units = vocab_size * 2
     dropout_rate = 0.3
     model = Sequential()
     model.add(
