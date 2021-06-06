@@ -5,6 +5,7 @@ import pickle
 import math
 import datetime
 import shutil
+import random
 from multiprocessing import Pool, cpu_count
 from collections import Counter
 import checksumdir
@@ -73,7 +74,138 @@ def is_data_changed():
     return False
 
 
-def get_notes_from_file(file, augment_data=True, semitones_augmentation=1):
+# all midis
+#
+# def get_notes_from_file(file, augment_data=False, semitones_augmentation=1):
+#     print(f"Parsing {file}")
+
+#     try:
+#         midi_stream = converter.parse(file)
+#     except:
+#         return []
+
+#     if augment_data:
+#         transposed_streams = []
+#         for interval in range(-semitones_augmentation, semitones_augmentation + 1):
+#             transposed_stream = midi_stream.transpose(interval)
+#             transposed_streams.append(transposed_stream)
+
+#         all_notes = []
+#         for transposed_stream in transposed_streams:
+#             notes = get_notes_from_midi_stream(transposed_stream)
+#             for note in notes:
+#                 all_notes.append(note)
+
+#     else:
+#         all_notes = get_notes_from_midi_stream(midi_stream)
+
+#     return all_notes
+
+
+# all midis
+#
+# def get_notes_from_midi_stream(midi_stream):
+#     notes = []
+#     try:
+#         # file has instrument parts
+#         instrument_stream = instrument.partitionByInstrument(midi_stream)
+#         notes_to_parse = instrument_stream.parts[0].recurse()
+#     except:
+#         # file has notes in a flat structure
+#         notes_to_parse = midi_stream.flat.notes
+
+#     for element in notes_to_parse:
+#         if isinstance(element, note.Note):
+#             notes.append(str(element.pitch.midi))
+#         elif isinstance(element, chord.Chord):
+#             midis = [pitch.midi for pitch in element.pitches]
+#             notes.append(".".join(str(midi) for midi in sorted(midis)))
+
+#     return notes
+
+
+# without augmentation
+#
+# def get_notes_from_file(file):
+#     print(f"Parsing {file}")
+
+#     notes = []
+
+#     # parsing a midi file
+#     midi = converter.parse(file)
+
+#     # grouping based on different instruments
+#     s2 = instrument.partitionByInstrument(midi)
+
+#     # Looping over all the instruments
+#     for part in s2.parts:
+
+#         # select elements of only piano
+#         if "Piano" in str(part):
+
+#             notes_to_parse = part.recurse()
+
+#             # finding whether a particular element is note or a chord
+#             for element in notes_to_parse:
+
+#                 # note
+#                 if isinstance(element, note.Note):
+#                     notes.append(str(get_midi_in_default_octave(element)))
+
+#                 # chord
+#                 elif isinstance(element, chord.Chord):
+#                     notes.append(
+#                         ".".join(
+#                             str(get_midi_in_default_octave(n))
+#                             for n in sorted(element.normalOrder)
+#                         )
+#                     )
+#     return notes
+
+
+def get_midi_in_default_octave(pattern):
+    if isinstance(pattern, note.Note):
+        note_in_default_octave = note.Note(pattern.name)
+    elif isinstance(pattern, int):
+        note_in_default_octave = note.Note(pattern)
+
+    return note_in_default_octave.pitch.midi
+
+
+def get_notes_from_midi_stream(midi_stream, octave_transposition=0):
+    transposition = octave_transposition * 12
+    notes = []
+    s2 = instrument.partitionByInstrument(midi_stream)
+
+    # Looping over all the instruments
+    for part in s2.parts:
+
+        # select elements of only piano
+        if "Piano" in str(part):
+
+            notes_to_parse = part.recurse()
+
+            # finding whether a particular element is note or a chord
+            for element in notes_to_parse:
+
+                # note
+                if isinstance(element, note.Note):
+                    notes.append(
+                        str(get_midi_in_default_octave(element) + transposition)
+                    )
+
+                # chord
+                elif isinstance(element, chord.Chord):
+                    notes.append(
+                        ".".join(
+                            str(get_midi_in_default_octave(n) + transposition)
+                            for n in sorted(element.normalOrder)
+                        )
+                    )
+    return notes
+
+
+def get_notes_from_file(file, augment_data=True, octave_augmentation=1):
     print(f"Parsing {file}")
 
     try:
@@ -82,14 +214,11 @@ def get_notes_from_file(file, augment_data=True, semitones_augmentation=1):
         return []
 
     if augment_data:
-        transposed_streams = []
-        for interval in range(-semitones_augmentation, semitones_augmentation + 1):
-            transposed_stream = midi_stream.transpose(interval)
-            transposed_streams.append(transposed_stream)
-
         all_notes = []
-        for transposed_stream in transposed_streams:
-            notes = get_notes_from_midi_stream(transposed_stream)
+        for octave_transposition in range(
+            -octave_augmentation, octave_augmentation + 1
+        ):
+            notes = get_notes_from_midi_stream(midi_stream, octave_transposition)
             for note in notes:
                 all_notes.append(note)
 
@@ -97,26 +226,6 @@ def get_notes_from_file(file, augment_data=True, semitones_augmentation=1):
         all_notes = get_notes_from_midi_stream(midi_stream)
 
     return all_notes
-
-
-def get_notes_from_midi_stream(midi_stream):
-    notes = []
-    try:
-        # file has instrument parts
-        instrument_stream = instrument.partitionByInstrument(midi_stream)
-        notes_to_parse = instrument_stream.parts[0].recurse()
-    except:
-        # file has notes in a flat structure
-        notes_to_parse = midi_stream.flat.notes
-
-    for element in notes_to_parse:
-        if isinstance(element, note.Note):
-            notes.append(str(element.pitch.midi))
-        elif isinstance(element, chord.Chord):
-            midis = [pitch.midi for pitch in element.pitches]
-            notes.append(".".join(str(midi) for midi in sorted(midis)))
-
-    return notes
 
 
 def get_notes_from_dataset():
@@ -246,13 +355,18 @@ def find_nearest_single_note_midi(vocab, midi_note):
         midi_note_down -= 12
         midi_note_up += 12
 
+        print(f"{midi_note} {midi_note_up} {midi_note_down}")
+
         if midi_note_down >= 0 and str(midi_note_down) in vocab.keys():
             return midi_note_down
 
         if midi_note_up <= 87 and str(midi_note_up) in vocab.keys():
             return midi_note_up
 
-    raise Exception(f"Midi note {midi_note} not found in the vocabulary")
+    print(
+        f"ALERT: couldn't find any appropriate representation of {midi_note} in vocabulary. Returned a random representation."
+    )
+    return random.choice([key for key in vocab.keys() if not "." in key])
 
 
 def save_midi_file(prediction_output):
