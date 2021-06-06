@@ -77,7 +77,11 @@ def is_data_changed():
 def get_notes_from_file(file):
     print(f"Parsing {file}")
 
-    midi = converter.parse(file)
+    try:
+        midi = converter.parse(file)
+    except:
+        return []
+
     notes = []
     try:
         # file has instrument parts
@@ -192,7 +196,7 @@ def get_class_weights(notes, vocab):
     notes_counter = Counter(mapped_notes)
 
     for key in notes_counter:
-        notes_counter[key] = 1 / math.sqrt(notes_counter[key])
+        notes_counter[key] = 1 / notes_counter[key]
 
     return notes_counter
 
