@@ -1,6 +1,6 @@
 import pygame
 import components
-from predict import generate_music_from_file
+from predict import generate_music
 
 
 def LoadFileIntoMusicPlayer(listViewer, musicPlayer):
@@ -70,7 +70,7 @@ def main():
                 if genButton.MouseDownHandler(mouse):
                     if selected_file != "":
                         print(f"Generating music from file {selected_file}")
-                        generate_music_from_file(selected_file)
+                        generate_music(selected_file)
                 listViewer.MouseDownHandler(mouse)
                 file = loadButton.MouseDownHandler(mouse)
                 if file is not False:

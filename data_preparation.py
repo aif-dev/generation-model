@@ -10,7 +10,7 @@ import checksumdir
 from music21 import converter, instrument, stream, note, chord
 from random_word import RandomWords
 from notes_sequence import NotesSequence
-
+from collections import Counter
 
 CHECKPOINTS_DIR = "checkpoints"
 MIDI_SONGS_DIR = "midi_songs"
@@ -66,28 +66,39 @@ def is_data_changed():
 def get_notes_from_file(file):
     print(f"Parsing {file}")
 
-    midi = converter.parse(file)
     notes = []
-    try:
-        # file has instrument parts
-        instrument_stream = instrument.partitionByInstrument(midi)
-        notes_to_parse = instrument_stream.parts[0].recurse()
-    except:
-        # file has notes in a flat structure
-        notes_to_parse = midi.flat.notes
 
-    for element in notes_to_parse:
-        if isinstance(element, note.Note):
-            notes.append(element.name)
-        elif isinstance(element, chord.Chord):
-            notes.append(".".join(str(n) for n in element.normalOrder))
+    #parsing a midi file
+    midi = converter.parse(file)
 
+    #grouping based on different instruments
+    s2 = instrument.partitionByInstrument(midi)
+
+    #Looping over all the instruments
+    for part in s2.parts:
+
+        #select elements of only piano
+        if 'Piano' in str(part):
+
+            notes_to_parse = part.recurse()
+
+            #finding whether a particular element is note or a chord
+            for element in notes_to_parse:
+
+                #note
+                if isinstance(element, note.Note):
+                    notes.append(str(element.name))
+
+                #chord
+                elif isinstance(element, chord.Chord):
+                    notes.append('.'.join(str(n) for n in element.normalOrder))
     return notes
 
 
 def get_notes_from_dataset():
     notes_path = os.path.join(DATA_DIR, NOTES_FILENAME)
     notes = []
+
     if is_data_changed():
         try:
             with Pool(cpu_count() - 1) as pool:
@@ -95,8 +106,17 @@ def get_notes_from_dataset():
                     get_notes_from_file, glob.glob(f"{MIDI_SONGS_DIR}/*.mid")
                 )
 
+            notes_ = []
+
             for notes_from_file in notes_from_files:
                 for note in notes_from_file:
+                    notes_.append(note)
+
+            freq = dict(Counter(notes_))
+            frequent_notes = [note_ for note_, count in freq.items() if count>=64]
+
+            for note in notes_:
+                if note in frequent_notes:
                     notes.append(note)
 
             with open(notes_path, "wb") as notes_data_file:
@@ -125,6 +145,8 @@ def create_vocabulary_for_training(notes):
     vocab_path = os.path.join(DATA_DIR, VOCABULARY_FILENAME)
     with open(vocab_path, "wb") as vocab_data_file:
         pickle.dump(vocab, vocab_data_file)
+
+    print(f"*** Vocabulary size {len(vocab)}")
 
     return vocab
 
