@@ -51,18 +51,18 @@ def create_network(vocab_size, weights_filename=None):
     model = Sequential()
     model.add(
         LSTM(
-            128,
+            64,
             input_shape=(SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT),
             return_sequences=True,
         )
     )
     model.add(Dropout(0.3))
-    model.add(LSTM(128, return_sequences=True))
+    model.add(LSTM(64, return_sequences=True))
     model.add(Dropout(0.3))
-    model.add(LSTM(128, return_sequences=True))
+    model.add(LSTM(64, return_sequences=True))
     model.add(Dropout(0.3))
-    model.add(LSTM(128))
-    model.add(Dense(256))
+    model.add(LSTM(64))
+    model.add(Dense(128))
     model.add(Dropout(0.3))
     model.add(Dense(vocab_size))
     model.add(Activation("softmax"))
