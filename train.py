@@ -15,7 +15,7 @@ from data_preparation import (
 
 
 LOG_DIR = "logs/"
-BATCH_SIZE = 128
+BATCH_SIZE = 64
 
 
 def get_latest_checkpoint():
@@ -53,15 +53,13 @@ def train_network():
 def train(model, training_sequence, validation_sequence):
     filepath = "checkpoints/weights-improvement-{epoch:02d}-{loss:.4f}-bigger.hdf5"
     model_checkpoint = ModelCheckpoint(
-        filepath, monitor="loss", verbose=0, save_best_only=True, mode="min"
+        filepath, monitor="val_acc", verbose=0, save_best_only=True, mode="max"
     )
-
-    early_stopping = EarlyStopping(monitor="val_loss", patience=3)
 
     logdir = LOG_DIR + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     tensorboard = TensorBoard(log_dir=logdir)
 
-    callbacks_list = [model_checkpoint, early_stopping, tensorboard]
+    callbacks_list = [model_checkpoint, tensorboard]
 
     model.fit(
         x=training_sequence,
