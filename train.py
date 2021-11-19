@@ -5,13 +5,14 @@ import sys
 import tensorflow as tf
 from keras.models import load_model
 from keras.callbacks import ModelCheckpoint, EarlyStopping, TensorBoard
-from network import create_network
-from data_preparation import (
+from models.basic_model import create_network
+from data.data_preparation import (
     get_notes_from_dataset,
     prepare_sequences_for_training,
     create_vocabulary_for_training,
     clean_data_and_checkpoints,
 )
+from data.data_preparation import SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT
 
 
 LOG_DIR = "logs/"
@@ -45,7 +46,7 @@ def train_network():
         print(f"*** Restoring from the lastest checkpoint: {latest_checkpoint} ***")
         model = load_model(latest_checkpoint)
     else:
-        model = create_network(vocab_size)
+        model = create_network((SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT),vocab_size)
 
     train(model, training_sequence, validation_sequence)
 

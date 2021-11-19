@@ -1,4 +1,4 @@
-from keras.utils import Sequence, np_utils
+from tensorflow.keras.utils import Sequence, to_categorical
 import math
 import numpy as np
 
@@ -45,6 +45,6 @@ class NotesSequence(Sequence):
         )
         normalized_network_input = unnormalized_network_input / float(self.vocab_size)
 
-        network_output = np_utils.to_categorical(network_output, self.vocab_size)
+        network_output = to_categorical(network_output, self.vocab_size)
 
         return normalized_network_input, network_output
