@@ -13,7 +13,7 @@ from notes_sequence import NotesSequence
 from collections import Counter
 
 CHECKPOINTS_DIR = "checkpoints"
-MIDI_SONGS_DIR = "midi_songs"
+MIDI_SONGS_DIR = "../datasets/maestro-v3.0.0"
 DATA_DIR = "data"
 NOTES_FILENAME = "notes"
 VOCABULARY_FILENAME = "vocabulary"

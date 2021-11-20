@@ -4,14 +4,15 @@ This project allows you to train a neural network to generate midi music files t
 
 ## Requirements
 
-Check the Pipfile.
-
+```
+    conda env create
+```
 ## How to run
 
 ### To download the Maestro dataset run:
 
 ```
-python populate_dataset.py
+sh /data/scripts/get_maestro.sh
 ```
 
 ### To train the network run:
