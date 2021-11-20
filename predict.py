@@ -1,6 +1,6 @@
 import os
 import sys
-import getopt
+import argparse
 import tensorflow as tf
 import numpy as np
 from models.basic_model import create_network
@@ -10,14 +10,14 @@ from data.data_preparation import (
     load_vocabulary_from_training,
     get_notes_from_file,
 )
-from data.data_preparation import SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT
+from data.data_preparation import SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT, CHECKPOINTS_DIR
 
 
 NUM_NOTES_TO_GENERATE = 300
 
 
 def get_best_weights_filename():
-    checkpoints = ["checkpoints/" + name for name in os.listdir("checkpoints/")]
+    checkpoints = [os.path.join(CHECKPOINTS_DIR, name) for name in os.listdir(CHECKPOINTS_DIR)]
 
     if not checkpoints:
         raise Exception("Couldn't find any weights in the checkpoints/ directory.")
@@ -42,9 +42,7 @@ def generate_notes(model, network_input, vocab, vocab_size):
     prediction_output = []
 
     for _ in range(NUM_NOTES_TO_GENERATE):
-        prediction_input = np.reshape(
-            sequence_in, (1, SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT)
-        )
+        prediction_input = np.reshape(sequence_in, (1, SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT))
 
         prediction = model.predict(prediction_input, verbose=0)
         best_note_idx = np.argmax(prediction)
@@ -55,9 +53,7 @@ def generate_notes(model, network_input, vocab, vocab_size):
         sequence_in.append(normalized_best_note_idx)
 
         # store only last 'SEQUENCE_LENGTH' elements for next prediction
-        sequence_in = sequence_in[
-            NUM_NOTES_TO_PREDICT : SEQUENCE_LENGTH + NUM_NOTES_TO_PREDICT
-        ]
+        sequence_in = sequence_in[NUM_NOTES_TO_PREDICT : SEQUENCE_LENGTH + NUM_NOTES_TO_PREDICT]
 
     return prediction_output
 
@@ -73,31 +69,12 @@ def generate_music(file):
     save_midi_file(prediction_output)
 
 
-def parse_cli_args():
-    usage_str = f"Usage: {sys.argv[0]} [-h] -f <seed_midi_file>"
+def parse_args():
+    parser = argparse.ArgumentParser(description="Launch model prediction.")
+    parser.add_argument("--model", help="name of the model to run prediction on", type=str, required=True)
+    parser.add_argument("--file", help="file to run prediction on", type=str, required=True)
 
-    try:
-        opts, _ = getopt.getopt(sys.argv[1:], "hf:")
-    except getopt.GetoptError:
-        print(usage_str)
-        sys.exit(2)
-
-    is_file_present = False
-
-    for opt, arg in opts:
-        if opt == "-h":
-            print(usage_str)
-            sys.exit(0)
-        elif opt == "-f":
-            is_file_present = True
-            file = arg
-
-    if not is_file_present:
-        print("Midi file not provided.")
-        print(usage_str)
-        sys.exit(2)
-
-    return file
+    return parser.parse_args()
 
 
 if __name__ == "__main__":
@@ -105,5 +82,5 @@ if __name__ == "__main__":
     for gpu in gpus:
         tf.config.experimental.set_memory_growth(gpu, True)
 
-    file = parse_cli_args()
-    generate_music(file)
+    args = parse_args()
+    generate_music(args.file)

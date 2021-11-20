@@ -6,7 +6,7 @@ from tensorflow.keras.layers import (
     Activation,
 )
 
-def create_network(input_shape, vocab_size, weights_filename=None):
+def create_network(input_shape, output_shape, weights_filename=None):
     model = Sequential()
     model.add(
         LSTM(
@@ -23,7 +23,7 @@ def create_network(input_shape, vocab_size, weights_filename=None):
     model.add(LSTM(64))
     model.add(Dense(128))
     model.add(Dropout(0.3))
-    model.add(Dense(vocab_size))
+    model.add(Dense(output_shape))
     model.add(Activation("softmax"))
     model.compile(loss="categorical_crossentropy", optimizer="rmsprop", metrics=["acc"])
 

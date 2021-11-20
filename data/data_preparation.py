@@ -9,12 +9,13 @@ from multiprocessing import Pool, cpu_count
 import checksumdir
 from music21 import converter, instrument, stream, note, chord
 from random_word import RandomWords
-from notes_sequence import NotesSequence
 from collections import Counter
+from .notes_sequence import NotesSequence
 
-CHECKPOINTS_DIR = "checkpoints"
+CHECKPOINTS_DIR = "runs/checkpoints"
 MIDI_SONGS_DIR = "../datasets/maestro-v3.0.0"
-DATA_DIR = "data"
+PROJ_DIR = "runs"
+RUN_DATA_DIR = "runs/run_data"
 NOTES_FILENAME = "notes"
 VOCABULARY_FILENAME = "vocabulary"
 HASH_FILENAME = "dataset_hash"
@@ -32,15 +33,15 @@ NUM_NOTES_TO_PREDICT = 1
 
 
 def clean_data_and_checkpoints():
-    shutil.rmtree(DATA_DIR)
+    shutil.rmtree(RUN_DATA_DIR)
     shutil.rmtree(CHECKPOINTS_DIR)
 
 
 def save_data_hash(hash_value):
-    if not os.path.isdir(DATA_DIR):
-        os.mkdir(DATA_DIR)
+    if not os.path.isdir(RUN_DATA_DIR):
+        os.makedirs(RUN_DATA_DIR)
 
-    hash_file_path = os.path.join(DATA_DIR, HASH_FILENAME)
+    hash_file_path = os.path.join(RUN_DATA_DIR, HASH_FILENAME)
     with open(hash_file_path, "wb") as hash_file:
         pickle.dump(hash_value, hash_file)
 
@@ -48,7 +49,7 @@ def save_data_hash(hash_value):
 def is_data_changed():
     current_hash = checksumdir.dirhash(MIDI_SONGS_DIR)
 
-    hash_file_path = os.path.join(DATA_DIR, HASH_FILENAME)
+    hash_file_path = os.path.join(RUN_DATA_DIR, HASH_FILENAME)
     if not os.path.exists(hash_file_path):
         save_data_hash(current_hash)
         return True
@@ -96,7 +97,7 @@ def get_notes_from_file(file):
 
 
 def get_notes_from_dataset():
-    notes_path = os.path.join(DATA_DIR, NOTES_FILENAME)
+    notes_path = os.path.join(RUN_DATA_DIR, NOTES_FILENAME)
     notes = []
 
     if is_data_changed():
@@ -123,7 +124,7 @@ def get_notes_from_dataset():
                 pickle.dump(notes, notes_data_file)
 
         except:
-            hash_file_path = os.path.join(DATA_DIR, HASH_FILENAME)
+            hash_file_path = os.path.join(RUN_DATA_DIR, HASH_FILENAME)
             os.remove(hash_file_path)
             print("Removed the hash file")
             sys.exit(1)
@@ -142,7 +143,7 @@ def create_vocabulary_for_training(notes):
     sound_names = sorted(set(item for item in notes))
     vocab = dict((note, number) for number, note in enumerate(sound_names))
 
-    vocab_path = os.path.join(DATA_DIR, VOCABULARY_FILENAME)
+    vocab_path = os.path.join(RUN_DATA_DIR, VOCABULARY_FILENAME)
     with open(vocab_path, "wb") as vocab_data_file:
         pickle.dump(vocab, vocab_data_file)
 
@@ -154,7 +155,7 @@ def create_vocabulary_for_training(notes):
 def load_vocabulary_from_training():
     print("*** Restoring vocabulary used for training ***")
 
-    vocab_path = os.path.join(DATA_DIR, VOCABULARY_FILENAME)
+    vocab_path = os.path.join(RUN_DATA_DIR, VOCABULARY_FILENAME)
     with open(vocab_path, "rb") as vocab_data_file:
         return pickle.load(vocab_data_file)
 
@@ -245,4 +246,5 @@ def save_midi_file(prediction_output):
         output_name = f"output_{datetime.datetime.now()}"
 
     midi_stream = stream.Stream(output_notes)
+    os.makedirs(RESULTS_DIR, exist_ok=True)
     midi_stream.write("midi", fp=f"{RESULTS_DIR}/{output_name}.mid")
