@@ -33,6 +33,7 @@ def train_network(model_type, batch_size, epochs):
     notes = get_notes_from_dataset()
     vocab = create_vocabulary_for_training(notes)
     vocab_size = len(vocab)
+    input_shape = (SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT)
 
     training_sequence, validation_sequence = prepare_sequences_for_training(notes, vocab, vocab_size, batch_size)
 
@@ -42,7 +43,7 @@ def train_network(model_type, batch_size, epochs):
         print(f"*** Restoring from the lastest checkpoint: {latest_checkpoint} ***")
         model = load_model(latest_checkpoint)
     else:
-        model = get_model(model_type, (SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT), vocab_size)
+        model = get_model(model_type, input_shape, output_shape=vocab_size)
 
     train(model, training_sequence, validation_sequence, epochs)
 

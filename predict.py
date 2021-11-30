@@ -13,9 +13,6 @@ from data.data_preparation import (
 from data.data_preparation import SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT, CHECKPOINTS_DIR
 
 
-NUM_NOTES_TO_GENERATE = 300
-
-
 def get_best_weights_filename():
     checkpoints = [os.path.join(CHECKPOINTS_DIR, name) for name in os.listdir(CHECKPOINTS_DIR)]
 
@@ -36,12 +33,12 @@ def get_best_weights_filename():
     return best_checkpoint
 
 
-def generate_notes(model, network_input, vocab, vocab_size):
+def generate_notes(model, network_input, vocab, vocab_size, notes_count):
     inverted_vocab = {i: note for note, i in vocab.items()}
     sequence_in = [note_idx / float(vocab_size) for note_idx in network_input]
     prediction_output = []
 
-    for _ in range(NUM_NOTES_TO_GENERATE):
+    for _ in range(notes_count):
         prediction_input = np.reshape(sequence_in, (1, SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT))
 
         prediction = model.predict(prediction_input, verbose=0)
@@ -58,14 +55,14 @@ def generate_notes(model, network_input, vocab, vocab_size):
     return prediction_output
 
 
-def generate_music(file):
+def generate_music(file, notes_count):
     notes = get_notes_from_file(file)
     vocab = load_vocabulary_from_training()
     vocab_size = len(vocab)
 
     network_input = prepare_sequence_for_prediction(notes, vocab)
     model = create_network((SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT), vocab_size, get_best_weights_filename())
-    prediction_output = generate_notes(model, network_input, vocab, vocab_size)
+    prediction_output = generate_notes(model, network_input, vocab, vocab_size, notes_count)
     save_midi_file(prediction_output)
 
 
@@ -73,6 +70,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Launch model prediction.")
     parser.add_argument("--model", help="name of the model to run prediction on", type=str, required=True)
     parser.add_argument("--file", help="file to run prediction on", type=str, required=True)
+    parser.add_argument("--notes", help="number of notes to generate", type=int, default=300)
 
     return parser.parse_args()
 
@@ -83,4 +81,4 @@ if __name__ == "__main__":
         tf.config.experimental.set_memory_growth(gpu, True)
 
     args = parse_args()
-    generate_music(args.file)
+    generate_music(args.file, args.notes)
