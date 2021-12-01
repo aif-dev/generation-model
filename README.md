@@ -16,7 +16,7 @@ conda env create
 e.g. download maestro dataset:
 
 ```
-sh /data/scripts/get_maestro.sh
+sh ./data/scripts/get_maestro.sh
 ```
 
 ### To train the network run:

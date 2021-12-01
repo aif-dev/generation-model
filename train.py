@@ -6,7 +6,7 @@ from keras.models import load_model
 from keras.callbacks import ModelCheckpoint, EarlyStopping, TensorBoard
 from data.data_preparation import (
     get_notes_from_dataset,
-    prepare_sequences_for_training,
+    prepare_dataset,
     create_vocabulary_for_training,
     clean_data_and_checkpoints,
 )
@@ -31,11 +31,16 @@ def get_latest_checkpoint():
 
 def train_network(model_type, batch_size, epochs):
     notes = get_notes_from_dataset()
+
     vocab = create_vocabulary_for_training(notes)
-    vocab_size = len(vocab)
     input_shape = (SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT)
 
-    training_sequence, validation_sequence = prepare_sequences_for_training(notes, vocab, vocab_size, batch_size)
+    training_sequence, validation_sequence = prepare_dataset(notes, vocab)
+
+    buffer_size = 10000
+
+    training_sequence = training_sequence.shuffle(buffer_size).batch(batch_size, drop_remainder=True).cache().prefetch(tf.data.experimental.AUTOTUNE)
+    validation_sequence = validation_sequence.shuffle(buffer_size).batch(batch_size, drop_remainder=True).cache().prefetch(tf.data.experimental.AUTOTUNE)
 
     latest_checkpoint = get_latest_checkpoint()
 
@@ -43,7 +48,7 @@ def train_network(model_type, batch_size, epochs):
         print(f"*** Restoring from the lastest checkpoint: {latest_checkpoint} ***")
         model = load_model(latest_checkpoint)
     else:
-        model = get_model(model_type, input_shape, output_shape=vocab_size)
+        model = get_model(model_type, input_shape, output_shape=len(vocab))
 
     train(model, training_sequence, validation_sequence, epochs)
 
@@ -62,7 +67,6 @@ def train(model, training_sequence, validation_sequence, epochs):
         validation_data=validation_sequence,
         epochs=epochs,
         callbacks=callbacks_list,
-        shuffle=True,
     )
 
 

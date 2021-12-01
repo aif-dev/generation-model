@@ -5,12 +5,12 @@ import pickle
 import math
 import datetime
 import shutil
+import tensorflow as tf
 from multiprocessing import Pool, cpu_count
 import checksumdir
 from music21 import converter, instrument, stream, note, chord
 from random_word import RandomWords
 from collections import Counter
-from .notes_sequence import NotesSequence
 
 CHECKPOINTS_DIR = "runs/checkpoints"
 MIDI_SONGS_DIR = "../datasets/maestro-v3.0.0"
@@ -152,6 +152,40 @@ def create_vocabulary_for_training(notes):
     return vocab
 
 
+def prepare_dataset(notes, vocab):
+    training_split = 1 - VALIDATION_SPLIT
+    notes = [vocab[note] for note in notes]
+    dataset_split = math.ceil(training_split * len(notes))
+
+    train_ds = tf.data.Dataset.from_tensor_slices(notes[:dataset_split])
+    val_ds = tf.data.Dataset.from_tensor_slices(notes[dataset_split:])
+
+    train_sequence = create_sequences(train_ds, SEQUENCE_LENGTH, len(vocab))
+    val_sequence = create_sequences(val_ds, SEQUENCE_LENGTH, len(vocab))
+
+    return train_sequence, val_sequence
+
+
+def create_sequences(dataset: tf.data.Dataset, seq_len: int, vocab_size: int) -> tf.data.Dataset:
+    seq_len=seq_len+1
+
+    windows = dataset.window(seq_len, shift=1, stride=1, drop_remainder=True)
+
+    flatten = lambda x: x.batch(seq_len, drop_remainder=True)
+    sequences = windows.flat_map(flatten)
+
+    def scale_notes(x):
+        x = x / vocab_size
+        return x
+
+    def split_labels(sequences):
+        inputs = sequences[:-1]
+        label = sequences[-1]
+        
+        return scale_notes(inputs), tf.one_hot(label, vocab_size)
+    
+    return sequences.map(split_labels, num_parallel_calls=tf.data.AUTOTUNE)
+
 def load_vocabulary_from_training():
     print("*** Restoring vocabulary used for training ***")
 
@@ -159,29 +193,7 @@ def load_vocabulary_from_training():
     with open(vocab_path, "rb") as vocab_data_file:
         return pickle.load(vocab_data_file)
 
-
-def prepare_sequences_for_training(notes, vocab, vocab_size, batch_size):
-    training_split = 1 - VALIDATION_SPLIT
-    dataset_split = math.ceil(training_split * len(notes))
-    training_sequence = NotesSequence(
-        notes[:dataset_split],
-        batch_size,
-        SEQUENCE_LENGTH,
-        vocab,
-        vocab_size,
-        NUM_NOTES_TO_PREDICT,
-    )
-    validation_sequence = NotesSequence(
-        notes[dataset_split:],
-        batch_size,
-        SEQUENCE_LENGTH,
-        vocab,
-        vocab_size,
-        NUM_NOTES_TO_PREDICT,
-    )
-
-    return training_sequence, validation_sequence
-
+# proposed data split
 
 def prepare_sequence_for_prediction(notes, vocab):
     if len(notes) < SEQUENCE_LENGTH:
