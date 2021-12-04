@@ -36,9 +36,7 @@ def parse_cli_args():
 if __name__ == "__main__":
     port = parse_cli_args()
 
-    tensorboard_process = subprocess.Popen(
-        ["tensorboard", "--logdir", LOG_DIR, "--port", str(port)]
-    )
+    tensorboard_process = subprocess.Popen(["tensorboard", "--logdir", LOG_DIR, "--port", str(port)])
     time.sleep(3)
 
     try:

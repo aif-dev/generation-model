@@ -22,6 +22,15 @@ sh ./data/scripts/get_maestro.sh
 ### To train the network run:
 
 ```
+python train.py --model <model> --dataset <dataset> --data <data>
+```
+e.g.
+```
+python train.py --model lstm --dataset vocab --data ../datasets/maestro-v3.0.0.
+```
+
+to see more options
+```
 python train.py -h
 ```
 
@@ -37,6 +46,15 @@ python tensorboard.py -h
 
 ### To generate music run:
 
+```
+python predict.py --model <model> --dataset <dataset> --data <data>
+```
+e.g.
+```
+python predict.py --model lstm --dataset vocab --data ../datasets/test
+```
+
+to see more options
 ```
 python predict.py -h
 ```

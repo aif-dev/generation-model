@@ -3,58 +3,17 @@ import datetime
 import tensorflow as tf
 import argparse
 from keras.models import load_model
-from keras.callbacks import ModelCheckpoint, EarlyStopping, TensorBoard
-from data.data_preparation import (
-    get_notes_from_dataset,
-    prepare_dataset,
-    create_vocabulary_for_training,
-    clean_data_and_checkpoints,
-)
-from data.data_preparation import SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT, CHECKPOINTS_DIR
+from keras.callbacks import ModelCheckpoint, TensorBoard
 from models.factory import get_model
-
+from data.factory import get_dataset
+from pathlib import Path
+from utils import checkpoints
 
 LOG_DIR = "logs/"
 
 
-def get_latest_checkpoint():
-    if not os.path.isdir(CHECKPOINTS_DIR):
-        os.makedirs(CHECKPOINTS_DIR)
-        return None
-
-    checkpoints = [os.path.join(CHECKPOINTS_DIR, name) for name in os.listdir(CHECKPOINTS_DIR)]
-    if checkpoints:
-        return max(checkpoints, key=os.path.getctime)
-    else:
-        return None
-
-
-def train_network(model_type, batch_size, epochs):
-    notes = get_notes_from_dataset()
-
-    vocab = create_vocabulary_for_training(notes)
-    input_shape = (SEQUENCE_LENGTH, NUM_NOTES_TO_PREDICT)
-
-    training_sequence, validation_sequence = prepare_dataset(notes, vocab)
-
-    buffer_size = 10000
-
-    training_sequence = training_sequence.shuffle(buffer_size).batch(batch_size, drop_remainder=True).cache().prefetch(tf.data.experimental.AUTOTUNE)
-    validation_sequence = validation_sequence.shuffle(buffer_size).batch(batch_size, drop_remainder=True).cache().prefetch(tf.data.experimental.AUTOTUNE)
-
-    latest_checkpoint = get_latest_checkpoint()
-
-    if latest_checkpoint:
-        print(f"*** Restoring from the lastest checkpoint: {latest_checkpoint} ***")
-        model = load_model(latest_checkpoint)
-    else:
-        model = get_model(model_type, input_shape, output_shape=len(vocab))
-
-    train(model, training_sequence, validation_sequence, epochs)
-
-
-def train(model, training_sequence, validation_sequence, epochs):
-    filepath = os.path.join(CHECKPOINTS_DIR, "weights-improvement-{epoch:02d}-{loss:.4f}-bigger.hdf5")
+def train(model, training_sequence, validation_sequence, epochs, checkpoint_dir):
+    filepath = os.path.join(checkpoint_dir, "weights-improvement-{epoch:02d}-{loss:.4f}-bigger.hdf5")
     model_checkpoint = ModelCheckpoint(filepath, monitor="val_acc", verbose=0, save_best_only=True, mode="max")
 
     logdir = LOG_DIR + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -71,13 +30,46 @@ def train(model, training_sequence, validation_sequence, epochs):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Launch model training.")
-    parser.add_argument("--model", help="name of the model to train", type=str, required=False)
-    parser.add_argument("--batch", help="batch size", type=int, required=False, default=64)
-    parser.add_argument("--epochs", help="training epochs", type=int, required=False, default=100)
-    parser.add_argument("--clean", help="clean /runs", action="store_true", required=False)
+    parser = argparse.ArgumentParser(description="Launch model training")
+    parser.add_argument("--model", help="name of the model", type=str, required=True)
+    parser.add_argument("--dataset", help="name of the dataset", type=str, required=True)
+    parser.add_argument("--batch", help="batch size", type=int, default=64)
+    parser.add_argument("--epochs", help="training epochs", type=int, default=100)
+    parser.add_argument("--clean", help="clean run artifacts", action="store_true", required=False)
+    parser.add_argument("--data", help="path to training data", type=Path, default="../datasets/maestro-v3.0.0")
+    parser.add_argument("--checkpoint", help="path to checkpoint dir", type=Path, default="proj/checkpoints")
+    parser.add_argument(
+        "--rundir", help="path to dir storing run artifacts (vocab, notes...)", type=Path, default="proj/data"
+    )
+    parser.add_argument("--sequence_length", help="input sequence length", type=int, default=100)
+    parser.add_argument("--num_notes_predict", help="output sequence length", type=int, default=1)
 
     return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+
+    if args.clean:
+        checkpoints.clean_data_and_checkpoints(args.rundir, args.checkpoint)
+
+    dataset = get_dataset(
+        args.dataset, args.data, args.rundir, (args.sequence_length, args.num_notes_predict), args.batch
+    )
+    training_sequence, validation_sequence = dataset.create()
+
+    latest_checkpoint = checkpoints.get_latest_checkpoint(args.checkpoint)
+
+    input_shape = (args.sequence_length, 1)
+
+    if latest_checkpoint:
+        print(f"*** Restoring from the lastest checkpoint: {latest_checkpoint} ***")
+        model = load_model(latest_checkpoint)
+    else:
+        output_shape = (args.num_notes_predict, dataset.vocab_size)
+        model = get_model(args.model, input_shape, output_shape)
+
+    train(model, training_sequence, validation_sequence, args.epochs, args.checkpoint)
 
 
 if __name__ == "__main__":
@@ -85,9 +77,4 @@ if __name__ == "__main__":
     for gpu in gpus:
         tf.config.experimental.set_memory_growth(gpu, True)
 
-    args = parse_args()
-
-    if args.clean:
-        clean_data_and_checkpoints()
-    if args.model:
-        train_network(args.model, args.batch, args.epochs)
+    main()
