@@ -19,13 +19,10 @@ class Visualizer():
         self.parse_file()
 
     def parse_file(self):
-        #do some parsing
-        print("TEST1")
         for file in self.filenames:
           pm = pretty_midi.PrettyMIDI(file)
           instrument = pm.instruments[0]
 
-          # Sort the notes by start time
           sorted_notes = sorted(instrument.notes, key=lambda note: note.start)
           for note in sorted_notes:
             self.notes['pitch'].append(note.pitch)
@@ -33,9 +30,7 @@ class Visualizer():
         return pd.DataFrame({name: np.array(value) for name, value in self.notes.items()})
 
     def plot_distributions(self):
-      print("TEST2")
       sns.histplot(self.notes, x="pitch")
       sns.set(rc={'figure.figsize':(100.55,8.27)})
       plt.xticks(rotation=90)
       plt.show()
-      
