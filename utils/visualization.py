@@ -11,36 +11,31 @@ from matplotlib import pyplot as plt
 import tensorflow as tf
 import seaborn as sns
 
-data_dir = pathlib.Path('./datasets/pianoroll')
-filenames = glob.glob(str(data_dir/'*'))
+class Visualizer():
 
-sample_file = "./datasets/pianoroll/Avalon.mid"
+    def __init__(self):
+        self.filenames = glob.glob(str(pathlib.Path('./datasets/pianoroll')/'*'))
+        self.notes = collections.defaultdict(list)
+        self.parse_file()
 
-pm = pretty_midi.PrettyMIDI(sample_file)
+    def parse_file(self):
+        #do some parsing
+        print("TEST1")
+        for file in self.filenames:
+          pm = pretty_midi.PrettyMIDI(file)
+          instrument = pm.instruments[0]
 
+          # Sort the notes by start time
+          sorted_notes = sorted(instrument.notes, key=lambda note: note.start)
+          for note in sorted_notes:
+            self.notes['pitch'].append(note.pitch)
 
-def midi_to_notes(filenames: array) -> pd.DataFrame:
-  notes = collections.defaultdict(list)
-  for file in filenames:
-    pm = pretty_midi.PrettyMIDI(file)
-    instrument = pm.instruments[0]
+        return pd.DataFrame({name: np.array(value) for name, value in self.notes.items()})
 
-    # Sort the notes by start time
-    sorted_notes = sorted(instrument.notes, key=lambda note: note.start)
-    for note in sorted_notes:
-      notes['pitch'].append(note.pitch)
-
-  return pd.DataFrame({name: np.array(value) for name, value in notes.items()})
-
-
-raw_notes = midi_to_notes(filenames)
-
-
-def plot_distributions(notes: pd.DataFrame, drop_percentile=2.5):
-  sns.histplot(notes, x="pitch")
-  sns.set(rc={'figure.figsize':(100.55,8.27)})
-  plt.xticks(rotation=90)
-  plt.show()
-
-
-plot_distributions(raw_notes)
+    def plot_distributions(self):
+      print("TEST2")
+      sns.histplot(self.notes, x="pitch")
+      sns.set(rc={'figure.figsize':(100.55,8.27)})
+      plt.xticks(rotation=90)
+      plt.show()
+      
