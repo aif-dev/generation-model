@@ -26,7 +26,7 @@ python train.py --model <model> --dataset <dataset> --data <data>
 ```
 e.g.
 ```
-python train.py --model lstm --dataset vocab --data ../datasets/maestro-v3.0.0.
+python train.py --model lstm --dataset vocab --data ../datasets/maestro-v3.0.0
 ```
 
 to see more options
