@@ -4,6 +4,8 @@ import sys
 import pickle
 import math
 import datetime
+from typing import List, Tuple, Dict
+
 import tensorflow as tf
 import numpy as np
 from multiprocessing import Pool, cpu_count
@@ -30,7 +32,7 @@ class VocabDataset(BaseDataset):
         self.notes = None
         self.vocab_size = 0
 
-    def parse_file(self, file: str) -> list[str]:
+    def parse_file(self, file: str) -> List[str]:
         print(f"Parsing {file}")
 
         notes = []
@@ -135,7 +137,7 @@ class VocabDataset(BaseDataset):
 
         return sequences.map(split_labels, num_parallel_calls=tf.data.AUTOTUNE)
 
-    def create_training(self) -> tuple[tf.data.Dataset, tf.data.Dataset]:
+    def create_training(self) -> Tuple[tf.data.Dataset, tf.data.Dataset]:
         """Creates data loaders for training and validation sets"""
         self.get_notes_from_dataset()
         self.create_vocab()
@@ -184,7 +186,7 @@ class VocabDataset(BaseDataset):
         else:
             raise ValueError("Not a valid mode")
 
-    def get_best_representation(self, vocab: dict[str, int], pattern: str) -> int:
+    def get_best_representation(self, vocab: Dict[str, int], pattern: str) -> int:
         """assumption: all 12 single notes are present in vocabulary"""
         if pattern in vocab.keys():
             return vocab[pattern]

@@ -3,6 +3,7 @@ from data import pianoroll_dataset, vocab_dataset
 
 def get_dataset(dataset, data_path, rundir, input_shape, batch_size=None):
     if dataset == "vocab":
+        print('dupa')
         return vocab_dataset.VocabDataset(
             data_path=data_path, rundir=rundir, input_shape=input_shape, batch_size=batch_size
         )

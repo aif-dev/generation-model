@@ -9,9 +9,13 @@ BUFFER_SIZE = 1000
 class BaseDataset(ABC):
     """Base interface for different ways of data handling"""
 
-    def __init__(
-        self, data_path: str, rundir: str, input_shape: int, vocab_name: str, notes_name: str, batch_size: int = None
-    ):
+    def __init__(self,
+                 data_path: str,
+                 rundir: str,
+                 input_shape: int,
+                 vocab_name: str,
+                 notes_name: str,
+                 batch_size: int = None):
         self.data_path = data_path
         self.rundir = rundir
         self.input_shape = input_shape

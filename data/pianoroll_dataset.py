@@ -22,7 +22,7 @@ class PianorollDataset(BaseDataset):
     def __init__(self, **kwargs):
         super().__init__(notes_name="pianoroll_notes", vocab_name="dummy", **kwargs)
 
-    def parse_file(self, file: str) -> np.ndarray:
+    def _parse_file(self, file: str) -> np.ndarray:
         pm = PrettyMIDI(file)
         ins = pm.instruments[0]
         return ins.get_piano_roll(fs=2)[21:109, :].T
