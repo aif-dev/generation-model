@@ -5,3 +5,4 @@ venv/
 logs/
 proj/
 *.mid
+data/

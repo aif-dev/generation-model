@@ -4,6 +4,8 @@ import sys
 import pickle
 import math
 import datetime
+from typing import Tuple
+
 import tensorflow as tf
 import numpy as np
 from pretty_midi import PrettyMIDI
@@ -77,7 +79,7 @@ class PianorollDataset(BaseDataset):
 
         return sequences.map(split_labels, num_parallel_calls=tf.data.AUTOTUNE)
 
-    def create_training(self) -> tuple[tf.data.Dataset, tf.data.Dataset]:
+    def create_training(self) -> Tuple[tf.data.Dataset, tf.data.Dataset]:
         """Creates data loaders for training and validation sets"""
         self.get_pianorolls()
 
