@@ -18,4 +18,3 @@ x, y = next(iter(sample))
 # print(y)
 
 model = MusicTransformer(embedding_dim=88, max_seq=100, debug=False, vocab_size=88)
-

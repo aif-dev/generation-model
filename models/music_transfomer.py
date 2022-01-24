@@ -6,8 +6,9 @@ from utils.layers import Encoder
 from utils.layers import Decoder
 import utils.music_transformer.utils as utils
 
+
 class MusicTransformer(tf.keras.Model):
-    def __init__(self, embedding_dim=256, vocab_size=388+2, num_layer=6,
+    def __init__(self, embedding_dim=256, vocab_size=388 + 2, num_layer=6,
                  max_seq=2048, dropout=0.2, debug=False, loader_path=None, dist=False):
         super(MusicTransformer, self).__init__()
         self._debug = debug
@@ -49,7 +50,7 @@ class MusicTransformer(tf.keras.Model):
 
     def train_on_batch(self, x, y=None, sample_weight=None, class_weight=None, reset_metrics=True):
         if self._debug:
-            tf.print('sanity:\n',self.sanity_check(x, y, mode='d'), output_stream=sys.stdout)
+            tf.print('sanity:\n', self.sanity_check(x, y, mode='d'), output_stream=sys.stdout)
 
         x, dec_input, target = self.__prepare_train_data(x, y)
 
@@ -73,7 +74,10 @@ class MusicTransformer(tf.keras.Model):
         for metric in self.custom_metrics:
             result_metric.append(metric(target, predictions).numpy())
 
-        return [loss.numpy()]+result_metric
+        return [loss.numpy()] + result_metric
+
+    # def train_on_batch(self, x, y):
+
 
     # @tf.function
     def __dist_train_step(self, inp, inp_tar, out_tar, enc_mask, tar_mask, lookup_mask, training):
@@ -99,10 +103,10 @@ class MusicTransformer(tf.keras.Model):
         x, inp_tar, out_tar = MusicTransformer.__prepare_train_data(x, y)
         enc_mask, tar_mask, look_ahead_mask = utils.get_masked_with_pad_tensor(self.max_seq, x, inp_tar)
         predictions, weights = self.call(
-                x,
-                targets=inp_tar,
-                src_mask=enc_mask,
-                trg_mask=tar_mask, lookup_mask=look_ahead_mask, training=False, eval=True)
+            x,
+            targets=inp_tar,
+            src_mask=enc_mask,
+            trg_mask=tar_mask, lookup_mask=look_ahead_mask, training=False, eval=True)
         loss = tf.reduce_mean(self.loss(out_tar, predictions))
         result_metric = []
         for metric in self.custom_metrics:
@@ -110,8 +114,8 @@ class MusicTransformer(tf.keras.Model):
         return [loss.numpy()] + result_metric, weights
 
     def save(self, filepath, overwrite=True, include_optimizer=False, save_format=None):
-        config_path = filepath+'/'+'config.json'
-        ckpt_path = filepath+'/ckpt'
+        config_path = filepath + '/' + 'config.json'
+        ckpt_path = filepath + '/ckpt'
 
         self.save_weights(ckpt_path, save_format='tf')
         with open(config_path, 'w') as f:
@@ -177,13 +181,13 @@ class MusicTransformer(tf.keras.Model):
 
             for i in range(min(self.max_seq, length)):
                 if i % 100 == 0:
-                    print('generating... {}% completed'.format((i/min(self.max_seq, length))*100))
+                    print('generating... {}% completed'.format((i / min(self.max_seq, length)) * 100))
                 enc_mask, tar_mask, look_ahead_mask = \
                     utils.get_masked_with_pad_tensor(decode_array.shape[1], prior, decode_array)
 
                 result = self.call(prior, targets=decode_array, src_mask=enc_mask,
-                                    trg_mask=tar_mask, lookup_mask=look_ahead_mask, training=False)
-                result = result[:,-1,:]
+                                   trg_mask=tar_mask, lookup_mask=look_ahead_mask, training=False)
+                result = result[:, -1, :]
                 result = tf.reshape(result, (1, -1))
                 result, result_idx = tf.nn.top_k(result, k)
                 row = result_idx // par.vocab_size
@@ -209,7 +213,7 @@ class MusicTransformer(tf.keras.Model):
                     utils.get_masked_with_pad_tensor(decode_array.shape[1], prior, decode_array)
 
                 result = self.call(prior, targets=decode_array, src_mask=enc_mask,
-                                    trg_mask=tar_mask, lookup_mask=look_ahead_mask, training=False)
+                                   trg_mask=tar_mask, lookup_mask=look_ahead_mask, training=False)
                 result = tf.argmax(result, -1)
                 result = tf.cast(result, tf.int32)
                 decode_array = tf.concat([decode_array, tf.expand_dims(result[:, -1], 0)], -1)
@@ -232,7 +236,7 @@ class MusicTransformer(tf.keras.Model):
 
     @staticmethod
     def __prepare_train_data(x, y):
-        start_token = tf.ones((y.shape[0], 1), dtype=y.dtype) * par.token_sos
+        start_token = tf.ones((y.shape[0], 1), dtype=y.dtype) * 0
         # end_token = tf.ones((y.shape[0], 1), dtype=y.dtype) * par.token_eos
 
         # # method with eos
@@ -254,7 +258,7 @@ class MusicTransformer(tf.keras.Model):
 
 
 class MusicTransformerDecoder(tf.keras.Model):
-    def __init__(self, embedding_dim=256, vocab_size=388+2, num_layer=6,
+    def __init__(self, embedding_dim=256, vocab_size=388 + 2, num_layer=6,
                  max_seq=2048, dropout=0.2, debug=False, loader_path=None, dist=False):
         super(MusicTransformerDecoder, self).__init__()
 
@@ -314,7 +318,7 @@ class MusicTransformerDecoder(tf.keras.Model):
         for metric in self.custom_metrics:
             result_metric.append(metric(y, predictions).numpy())
 
-        return [loss.numpy()]+result_metric
+        return [loss.numpy()] + result_metric
 
     # @tf.function
     def __dist_train_step(self, inp_tar, out_tar, lookup_mask, training):
@@ -340,7 +344,7 @@ class MusicTransformerDecoder(tf.keras.Model):
         # x, inp_tar, out_tar = MusicTransformer.__prepare_train_data(x, y)
         _, _, look_ahead_mask = utils.get_masked_with_pad_tensor(self.max_seq, x, x)
         predictions, w = self.call(
-                x, lookup_mask=look_ahead_mask, training=False, eval=True)
+            x, lookup_mask=look_ahead_mask, training=False, eval=True)
         loss = tf.reduce_mean(self.loss(y, predictions))
         result_metric = []
         for metric in self.custom_metrics:
@@ -348,8 +352,8 @@ class MusicTransformerDecoder(tf.keras.Model):
         return [loss.numpy()] + result_metric, w
 
     def save(self, filepath, overwrite=True, include_optimizer=False, save_format=None):
-        config_path = filepath+'/'+'config.json'
-        ckpt_path = filepath+'/ckpt'
+        config_path = filepath + '/' + 'config.json'
+        ckpt_path = filepath + '/ckpt'
 
         self.save_weights(ckpt_path, save_format='tf')
         with open(config_path, 'w') as f:
@@ -414,7 +418,7 @@ class MusicTransformerDecoder(tf.keras.Model):
                 if decode_array.shape[1] >= self.max_seq:
                     break
                 if i % 100 == 0:
-                    print('generating... {}% completed'.format((i/min(self.max_seq, length))*100))
+                    print('generating... {}% completed'.format((i / min(self.max_seq, length)) * 100))
                 _, _, look_ahead_mask = \
                     utils.get_masked_with_pad_tensor(decode_array.shape[1], decode_array, decode_array)
 
@@ -422,7 +426,7 @@ class MusicTransformerDecoder(tf.keras.Model):
                 if tf_board:
                     tf.summary.image('generate_vector', tf.expand_dims([result[0]], -1), i)
 
-                result = result[:,-1,:]
+                result = result[:, -1, :]
                 result = tf.reshape(result, (1, -1))
                 result, result_idx = tf.nn.top_k(result, k)
                 row = result_idx // par.vocab_size
@@ -474,8 +478,18 @@ class MusicTransformerDecoder(tf.keras.Model):
         accuracy = tf.keras.metrics.SparseCategoricalAccuracy()
         self.custom_metrics = [accuracy]
 
+
 def create_network(input_shape, _output_shape, weights_filename=None):
     model = MusicTransformer(embedding_dim=88, max_seq=input_shape, debug=False)
+    loss = tf.nn.softmax_cross_entropy_with_logits
+    learning_rate = tf.keras.optimizers.schedules.LearningRateSchedule
+    opt = tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
+
+    model.compile(loss=loss, optimizer=opt, metrics=["acc"])
+    # model.summary()
+
     if weights_filename:
         print(f"*** Loading weights from {weights_filename} ***")
         model.load_weights(weights_filename)
+
+    return model

@@ -60,13 +60,13 @@ def main():
 
     latest_checkpoint = checkpoints.get_latest_checkpoint(args.checkpoint)
 
-    input_shape = (args.sequence_length, 1)
+    input_shape = args.sequence_length
 
     if latest_checkpoint:
         print(f"*** Restoring from the lastest checkpoint: {latest_checkpoint} ***")
         model = load_model(latest_checkpoint)
     else:
-        output_shape = (args.num_notes_predict, dataset.vocab_size)
+        output_shape = args.num_notes_predict
         model = get_model(args.model, input_shape, output_shape)
 
     train(model, training_sequence, validation_sequence, args.epochs, args.checkpoint)
